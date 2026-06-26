@@ -6,4 +6,5 @@
 //! toca mas de una tabla.
 
 pub mod attractions;
+pub mod editions;
 pub mod fairs;
