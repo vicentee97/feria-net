@@ -80,7 +80,6 @@ import {
 } from "@/lib/editions";
 import { formatDateRange } from "@/lib/datetime";
 import { formatEur } from "@/lib/money";
-import { errorMessage } from "@/lib/errors";
 import type { FairEditionStatus } from "@/types/domain";
 
 export function EdicionDetallePage() {
@@ -147,17 +146,11 @@ export function EdicionDetallePage() {
   async function performStatusChange(
     targetStatus: FairEditionStatus,
   ): Promise<void> {
-    try {
-      const updated = await changeStatus.mutateAsync({
-        id: edition!.id,
-        status: targetStatus,
-      });
-      toast.success(
-        statusTransitionToast(updated.status, updated.year),
-      );
-    } catch (e) {
-      toast.error(errorMessage(e));
-    }
+    const updated = await changeStatus.mutateAsync({
+      id: edition!.id,
+      status: targetStatus,
+    });
+    toast.success(statusTransitionToast(updated.status, updated.year));
   }
 
   async function handleStatusSelect(targetStatus: FairEditionStatus) {
@@ -192,8 +185,11 @@ export function EdicionDetallePage() {
       // Paso 2: activar esta.
       await performStatusChange(conflict.pendingStatus);
       setConflict(null);
-    } catch (e) {
-      toast.error(errorMessage(e));
+    } catch {
+      // Los toasts de error los emiten los hooks en su `onError`.
+      // Aqui solo queremos evitar cerrar el dialog si falla la
+      // operacion (R1: si la 2ª llamada falla, la otra edicion queda
+      // cerrada y esta sin activar).
     } finally {
       setDialogBusy(false);
     }
@@ -203,12 +199,12 @@ export function EdicionDetallePage() {
     if (!fairId || !edicionId) return;
     try {
       await deleteEdition.mutateAsync(edicionId);
-      toast.success(
-        `Edicion ${edition!.year} eliminada.`,
-      );
+      toast.success(`Edicion ${edition!.year} eliminada.`);
       navigate(`/ferias/${fairId}`, { replace: true });
     } catch (e) {
-      toast.error(errorMessage(e));
+      // El toast de error lo emite `useDeleteEdition` en su `onError`.
+      // Re-lanzamos para que `ConfirmDestructiveDialog` mantenga el
+      // dialog abierto al fallar la operacion.
       throw e;
     }
   }
@@ -475,7 +471,11 @@ export function EdicionDetallePage() {
                                     `Atraccion "${a.name}" eliminada.`,
                                   );
                                 } catch (e) {
-                                  toast.error(errorMessage(e));
+                                  // El toast de error lo emite
+                                  // `useSoftDeleteAttraction` en su `onError`.
+                                  // Re-lanzamos para que
+                                  // `ConfirmDestructiveDialog` mantenga el
+                                  // dialog abierto al fallar la operacion.
                                   throw e;
                                 }
                               }}

@@ -31,6 +31,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 import { FormCentered } from "@/components/app/FormCentered";
 import { DetailSkeleton } from "@/components/app/LoadingState";
@@ -38,7 +39,6 @@ import { ErrorState } from "@/components/app/ErrorState";
 
 import { useFair, useUpdateFair } from "@/hooks/queries/fairs";
 import { updateFairSchema, type UpdateFairValues } from "@/lib/schemas";
-import { errorMessage } from "@/lib/errors";
 
 export function FeriaEditarPage() {
   const { fairId } = useParams<{ fairId: string }>();
@@ -90,13 +90,9 @@ export function FeriaEditarPage() {
       return;
     }
 
-    try {
-      await updateFair.mutateAsync({ id: fairId, input });
-      toast.success("Feria actualizada.");
-      navigate(`/ferias/${fairId}`, { replace: true });
-    } catch (e) {
-      toast.error(errorMessage(e));
-    }
+    await updateFair.mutateAsync({ id: fairId, input });
+    toast.success("Feria actualizada.");
+    navigate(`/ferias/${fairId}`, { replace: true });
   }
 
   if (fairQuery.isPending) {
@@ -170,13 +166,12 @@ export function FeriaEditarPage() {
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel htmlFor="fair-edit-notes">Notas</FieldLabel>
-                <textarea
+                <Textarea
                   id="fair-edit-notes"
                   maxLength={500}
                   aria-invalid={fieldState.invalid}
                   {...field}
                   value={(field.value as string | null | undefined) ?? ""}
-                  className="flex min-h-20 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/40"
                 />
                 <FieldDescription>
                   Vacio = borrar notas. Maximo 500 caracteres.

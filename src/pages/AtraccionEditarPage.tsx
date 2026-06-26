@@ -37,7 +37,6 @@ import {
 } from "@/hooks/queries/attractions";
 import { attractionFormSchema, type AttractionFormValues } from "@/lib/schemas";
 import { centsToEur, eurToCents } from "@/lib/money";
-import { errorMessage } from "@/lib/errors";
 
 export function AtraccionEditarPage() {
   const { fairId, edicionId, atraccionId } = useParams<{
@@ -79,37 +78,26 @@ export function AtraccionEditarPage() {
 
   async function onSubmit(values: AttractionFormValues) {
     if (!atraccionId) return;
-    let cents: number;
-    try {
-      const c = eurToCents(values.base_ticket_price_eur);
-      if (c === null) {
-        toast.error("Precio invalido.");
-        return;
-      }
-      cents = c;
-    } catch (e) {
-      toast.error(errorMessage(e));
+    const cents = eurToCents(values.base_ticket_price_eur);
+    if (cents === null) {
+      toast.error("Precio invalido.");
       return;
     }
-    try {
-      await updateAttraction.mutateAsync({
-        id: atraccionId,
-        input: {
-          name: values.name.trim(),
-          color: values.color.toUpperCase(),
-          base_ticket_price: cents,
-        },
-      });
-      toast.success("Atraccion actualizada.");
-      navigate(
-        fairId && edicionId
-          ? `/ferias/${fairId}/ediciones/${edicionId}`
-          : "/ferias",
-        { replace: true },
-      );
-    } catch (e) {
-      toast.error(errorMessage(e));
-    }
+    await updateAttraction.mutateAsync({
+      id: atraccionId,
+      input: {
+        name: values.name.trim(),
+        color: values.color.toUpperCase(),
+        base_ticket_price: cents,
+      },
+    });
+    toast.success("Atraccion actualizada.");
+    navigate(
+      fairId && edicionId
+        ? `/ferias/${fairId}/ediciones/${edicionId}`
+        : "/ferias",
+      { replace: true },
+    );
   }
 
   if (attractionsQuery.isPending) {

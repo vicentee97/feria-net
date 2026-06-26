@@ -55,7 +55,6 @@ import {
   findConflictingActiveEdition,
   formatEditionLabel,
 } from "@/lib/editions";
-import { errorMessage } from "@/lib/errors";
 import type { FairEditionStatus } from "@/types/domain";
 
 export function EdicionEditarPage() {
@@ -185,17 +184,13 @@ export function EdicionEditarPage() {
       );
       return;
     }
-    try {
-      await updateEdition.mutateAsync({ id: edition.id, input });
-      navigate(
-        fairId && edicionId
-          ? `/ferias/${fairId}/ediciones/${edicionId}`
-          : "/ferias",
-        { replace: true },
-      );
-    } catch (e) {
-      toast.error(errorMessage(e));
-    }
+    await updateEdition.mutateAsync({ id: edition.id, input });
+    navigate(
+      fairId && edicionId
+        ? `/ferias/${fairId}/ediciones/${edicionId}`
+        : "/ferias",
+      { replace: true },
+    );
   }
 
   async function onSubmit(values: FairEditionFormValues) {
@@ -231,8 +226,11 @@ export function EdicionEditarPage() {
       // Paso 2: aplicar la edicion (con status = 'active').
       await performUpdate(conflict.pendingInput);
       setConflict(null);
-    } catch (e) {
-      toast.error(errorMessage(e));
+    } catch {
+      // Los toasts de error los emiten `useChangeEditionStatus` y
+      // `useUpdateEdition` en su `onError`. Aqui solo queremos evitar
+      // cerrar el dialog si falla la operacion (R1: si la 2ª llamada
+      // falla, la otra edicion queda cerrada y esta sin activar).
     } finally {
       setDialogBusy(false);
     }

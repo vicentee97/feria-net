@@ -25,7 +25,6 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, useNavigate, useParams } from "react-router";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -54,7 +53,6 @@ import {
   findConflictingActiveEdition,
   formatEditionLabel,
 } from "@/lib/editions";
-import { errorMessage } from "@/lib/errors";
 import { todayLocalISO } from "@/lib/datetime";
 
 export function EdicionNuevaPage() {
@@ -102,12 +100,8 @@ export function EdicionNuevaPage() {
 
   async function performCreate(input: FairEditionFormValues) {
     if (!fairId) return;
-    try {
-      const edition = await createEdition.mutateAsync(input);
-      navigate(`/ferias/${fairId}/ediciones/${edition.id}`, { replace: true });
-    } catch (e) {
-      toast.error(errorMessage(e));
-    }
+    const edition = await createEdition.mutateAsync(input);
+    navigate(`/ferias/${fairId}/ediciones/${edition.id}`, { replace: true });
   }
 
   async function onSubmit(values: FairEditionFormValues) {
@@ -144,15 +138,13 @@ export function EdicionNuevaPage() {
       // Importante: usar el input tal como esta (status = 'active').
       await performCreate(conflict.pendingInput);
       // El dialog se cierra solo si la creacion navega (success).
-      // Si performCreate falla, performCreate ya emite toast y mantiene
-      // al usuario en la pagina; cerramos el dialog aqui igualmente.
       setConflict(null);
-    } catch (e) {
-      // El toast ya lo emite `changeStatus` / `performCreate`.
-      // Si la 2ª llamada falla, el estado queda: la otra cerrada y
-      // esta sin activar (R1). El operador puede reintentar desde
-      // el detalle de la nueva edicion.
-      toast.error(errorMessage(e));
+    } catch {
+      // Los toasts de error los emiten `useChangeEditionStatus` y
+      // `useCreateEdition` en su `onError`. Aqui solo queremos evitar
+      // cerrar el dialog si falla la operacion; el operador puede
+      // reintentar desde el detalle (R1: si la 2ª llamada falla, la
+      // otra edicion queda cerrada y esta sin activar).
     } finally {
       setDialogBusy(false);
     }

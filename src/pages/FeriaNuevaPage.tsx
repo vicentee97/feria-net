@@ -34,29 +34,7 @@ import { FormCentered } from "@/components/app/FormCentered";
 
 import { useCreateFair, useSuggestFairByName } from "@/hooks/queries/fairs";
 import { fairFormSchema, type FairFormValues } from "@/lib/schemas";
-import { errorMessage } from "@/lib/errors";
-
-// Hook de debounce propio (no añadimos `use-debounce` para evitar
-// una dep extra cuando solo lo usamos en un sitio). Esta función
-// existe para documentar la intencion; el debounce real está
-// inline en el componente con `useState` + `setTimeout` para evitar
-// hooks adicionales.
-
-// Textarea simple (no instalamos el componente shadcn porque no
-// estaba en la lista del brief; con un `<textarea>` estilado basta).
-function TextAreaUsed(
-  props: React.TextareaHTMLAttributes<HTMLTextAreaElement>,
-) {
-  return (
-    <textarea
-      {...props}
-      className={
-        "flex min-h-20 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/40 " +
-        (props.className ?? "")
-      }
-    />
-  );
-}
+import { Textarea } from "@/components/ui/textarea";
 
 export function FeriaNuevaPage() {
   const navigate = useNavigate();
@@ -79,16 +57,15 @@ export function FeriaNuevaPage() {
   const suggestQuery = useSuggestFairByName(debouncedName, !createFair.isPending);
 
   async function onSubmit(values: FairFormValues) {
-    try {
-      const fair = await createFair.mutateAsync({
-        name: values.name.trim(),
-        notes: values.notes && values.notes.trim() !== "" ? values.notes.trim() : null,
-      });
-      toast.success(`Feria "${fair.name}" creada.`);
-      navigate(`/ferias/${fair.id}`, { replace: true });
-    } catch (e) {
-      toast.error(errorMessage(e));
-    }
+    const fair = await createFair.mutateAsync({
+      name: values.name.trim(),
+      notes:
+        values.notes && values.notes.trim() !== ""
+          ? values.notes.trim()
+          : null,
+    });
+    toast.success(`Feria "${fair.name}" creada.`);
+    navigate(`/ferias/${fair.id}`, { replace: true });
   }
 
   const suggestion = suggestQuery.data;
@@ -152,26 +129,26 @@ export function FeriaNuevaPage() {
             )}
           />
 
-          <Controller
-            control={form.control}
-            name="notes"
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="fair-notes">Notas (opcional)</FieldLabel>
-                <TextAreaUsed
-                  id="fair-notes"
-                  placeholder="Observaciones internas sobre la feria."
-                  maxLength={500}
-                  aria-invalid={fieldState.invalid}
-                  {...field}
-                  value={field.value ?? ""}
-                />
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
-              </Field>
-            )}
-          />
+<Controller
+              control={form.control}
+              name="notes"
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="fair-notes">Notas (opcional)</FieldLabel>
+                  <Textarea
+                    id="fair-notes"
+                    placeholder="Observaciones internas sobre la feria."
+                    maxLength={500}
+                    aria-invalid={fieldState.invalid}
+                    {...field}
+                    value={field.value ?? ""}
+                  />
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
         </FieldGroup>
 
         <div className="flex items-center justify-end gap-2 pt-1">

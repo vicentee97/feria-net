@@ -3,12 +3,12 @@
  *
  * Resumen de la temporada. Estados:
  *  - Sin ferias: CTA grande "Crear primera feria".
- *  - Con ferias: tarjeta por cada feria, mostrando nombre, notas
- *    truncadas, numero de ediciones y atracciones.
+ *  - Con ferias: listado por nombre con notas truncadas y fecha de
+ *    creacion. Click en una fila abre su detalle.
  *
- * Las ediciones y atracciones se cuentan via queries adicionales.
  * Para v1 esto es suficiente: en MVP no hay aun "temporada" formal,
- * asi que el dashboard es informativo, no accionable.
+ * asi que el dashboard es informativo, no accionable. Los conteos de
+ * ediciones y atracciones se ven dentro del detalle de cada feria.
  */
 
 import { Link } from "react-router";

@@ -36,8 +36,6 @@ interface ConfirmDestructiveDialogProps {
   onConfirm: () => Promise<unknown> | unknown;
   /** Texto del boton cancelar. Default: "Cancelar". */
   cancelLabel?: string;
-  /** Mensaje del toast de exito (lo emite el caller, este dialogo solo ejecuta). */
-  onSuccess?: () => void;
 }
 
 export function ConfirmDestructiveDialog({
@@ -47,7 +45,6 @@ export function ConfirmDestructiveDialog({
   actionLabel = "Eliminar",
   onConfirm,
   cancelLabel = "Cancelar",
-  onSuccess,
 }: ConfirmDestructiveDialogProps) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -57,9 +54,10 @@ export function ConfirmDestructiveDialog({
     try {
       await onConfirm();
       setOpen(false);
-      onSuccess?.();
     } catch {
-      // El caller maneja el toast de error; dejamos el dialog abierto.
+      // El caller maneja el toast de error (el hook ya lo emite en su
+      // `onError`). Dejamos el dialog abierto para que el operador
+      // pueda reintentar o cancelar.
     } finally {
       setBusy(false);
     }

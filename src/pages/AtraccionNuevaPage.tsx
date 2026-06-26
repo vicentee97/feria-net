@@ -36,7 +36,6 @@ import { ColorPicker } from "@/components/app/ColorPicker";
 import { useCreateAttraction } from "@/hooks/queries/attractions";
 import { attractionFormSchema, type AttractionFormValues } from "@/lib/schemas";
 import { eurToCents } from "@/lib/money";
-import { errorMessage } from "@/lib/errors";
 
 export function AtraccionNuevaPage() {
   const { fairId, edicionId } = useParams<{
@@ -63,30 +62,19 @@ export function AtraccionNuevaPage() {
 
   async function onSubmit(values: AttractionFormValues) {
     if (!edicionId) return;
-    let cents: number;
-    try {
-      const c = eurToCents(values.base_ticket_price_eur);
-      if (c === null) {
-        toast.error("Precio invalido.");
-        return;
-      }
-      cents = c;
-    } catch (e) {
-      toast.error(errorMessage(e));
+    const cents = eurToCents(values.base_ticket_price_eur);
+    if (cents === null) {
+      toast.error("Precio invalido.");
       return;
     }
-    try {
-      const attr = await createAttraction.mutateAsync({
-        fair_edition_id: edicionId,
-        name: values.name.trim(),
-        color: values.color.toUpperCase(),
-        base_ticket_price: cents,
-      });
-      toast.success(`Atraccion "${attr.name}" creada.`);
-      navigate(`/ferias/${fairId}/ediciones/${edicionId}`, { replace: true });
-    } catch (e) {
-      toast.error(errorMessage(e));
-    }
+    const attr = await createAttraction.mutateAsync({
+      fair_edition_id: edicionId,
+      name: values.name.trim(),
+      color: values.color.toUpperCase(),
+      base_ticket_price: cents,
+    });
+    toast.success(`Atraccion "${attr.name}" creada.`);
+    navigate(`/ferias/${fairId}/ediciones/${edicionId}`, { replace: true });
   }
 
   return (

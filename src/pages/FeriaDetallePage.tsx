@@ -53,10 +53,9 @@ import { StatusBadge } from "@/components/app/StatusBadge";
 import { ConfirmDestructiveDialog } from "@/components/app/ConfirmDestructiveDialog";
 
 import { useDeleteFair, useFair } from "@/hooks/queries/fairs";
-import { useEditionsByFair, editionKeys } from "@/hooks/queries/editions";
+import { useEditionsByFair } from "@/hooks/queries/editions";
 import { listAttractionsByEdition } from "@/api/tauri";
 import { formatTimestamp, formatDateRange } from "@/lib/datetime";
-import { errorMessage } from "@/lib/errors";
 
 export function FeriaDetallePage() {
   const { fairId } = useParams<{ fairId: string }>();
@@ -124,7 +123,9 @@ export function FeriaDetallePage() {
       toast.success(`Feria "${fair!.name}" eliminada.`);
       navigate("/ferias", { replace: true });
     } catch (e) {
-      toast.error(errorMessage(e));
+      // El toast de error lo emite `useDeleteFair` en su `onError`.
+      // Re-lanzamos para que `ConfirmDestructiveDialog` mantenga el
+      // dialog abierto al fallar la operacion.
       throw e;
     }
   }
@@ -372,6 +373,3 @@ function EditionAttractionCount({
   }
   return <span>{count}</span>;
 }
-
-// Suprimimos el warning de unused si llegara a no usarse en una refactor.
-void editionKeys;

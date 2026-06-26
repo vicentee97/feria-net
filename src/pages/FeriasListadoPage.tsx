@@ -44,7 +44,6 @@ import { ConfirmDestructiveDialog } from "@/components/app/ConfirmDestructiveDia
 
 import { useDeleteFair, useFairs } from "@/hooks/queries/fairs";
 import { formatTimestamp } from "@/lib/datetime";
-import { errorMessage } from "@/lib/errors";
 
 export function FeriasListadoPage() {
   const fairsQuery = useFairs();
@@ -210,7 +209,9 @@ function RowActions({ fairId, fairName }: { fairId: string; fairName: string }) 
               await deleteFair.mutateAsync(fairId);
               toast.success(`Feria "${fairName}" eliminada.`);
             } catch (e) {
-              toast.error(errorMessage(e));
+              // El toast de error lo emite `useDeleteFair` en su `onError`.
+              // Re-lanzamos para que `ConfirmDestructiveDialog` mantenga
+              // el dialog abierto al fallar la operacion.
               throw e;
             }
           }}
