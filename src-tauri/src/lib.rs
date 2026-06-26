@@ -22,7 +22,9 @@ use std::sync::Arc;
 use tauri::Manager;
 use tracing_subscriber::{fmt, EnvFilter};
 
-use crate::commands::{attractions as cmd_attractions, fairs as cmd_fairs};
+use crate::commands::{
+    attractions as cmd_attractions, editions as cmd_editions, fairs as cmd_fairs,
+};
 use crate::db::DbPool;
 use crate::state::AppState;
 
@@ -79,6 +81,12 @@ pub fn run() {
             cmd_attractions::list_attractions_by_edition,
             cmd_attractions::update_attraction,
             cmd_attractions::soft_delete_attraction,
+            // Ediciones (TEAM-005)
+            cmd_editions::list_fair_editions,
+            cmd_editions::create_fair_edition,
+            cmd_editions::update_fair_edition,
+            cmd_editions::delete_fair_edition,
+            cmd_editions::change_fair_edition_status,
         ])
         .run(tauri::generate_context!())
         .expect("error al ejecutar la aplicacion Tauri");
