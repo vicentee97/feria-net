@@ -7,19 +7,21 @@
  *  - Toaster (Sonner) para feedback de mutaciones.
  *  - TooltipProvider global (shadcn) para tooltips en toda la app.
  *
- * Estructura de rutas (ver brief, ajustada al estado real del backend):
+ * Estructura de rutas (TEAM-006; toda la superficie de la epica 1 esta
+ * activa; `PendingBackendPage` se mantiene como utility pero no aparece
+ * en el router):
  *  /                                                Dashboard
  *  /ferias                                          FeriasListado
  *  /ferias/nueva                                    FeriaNueva
  *  /ferias/:fairId                                  FeriaDetalle
  *  /ferias/:fairId/editar                           FeriaEditar
- *  /ferias/:fairId/ediciones/nueva                  Pendiente backend
- *  /ferias/:fairId/ediciones/:edicionId             Pendiente backend
- *  /ferias/:fairId/ediciones/:edicionId/editar      Pendiente backend
- *  /ferias/:fairId/ediciones/:edicionId/atraccciones/nueva
- *                                                   Pendiente backend
+ *  /ferias/:fairId/ediciones/nueva                  EdicionNueva
+ *  /ferias/:fairId/ediciones/:edicionId             EdicionDetalle
+ *  /ferias/:fairId/ediciones/:edicionId/editar      EdicionEditar
+ *  /ferias/:fairId/ediciones/:edicionId/atracciones/nueva
+ *                                                   AtraccionNueva
  *  /ferias/:fairId/ediciones/:edicionId/atracciones/:atraccionId/editar
- *                                                   Pendiente backend
+ *                                                   AtraccionEditar
  *  *                                                NotFound
  *
  * Layout principal (sidebar) envuelve todas las rutas validas.
@@ -42,7 +44,10 @@ import { FeriasListadoPage } from "@/pages/FeriasListadoPage";
 import { FeriaNuevaPage } from "@/pages/FeriaNuevaPage";
 import { FeriaDetallePage } from "@/pages/FeriaDetallePage";
 import { FeriaEditarPage } from "@/pages/FeriaEditarPage";
-import { PendingBackendPage } from "@/pages/PendingBackendPage";
+import { EdicionNuevaPage } from "@/pages/EdicionNuevaPage";
+import { EdicionDetallePage } from "@/pages/EdicionDetallePage";
+import { EdicionEditarPage } from "@/pages/EdicionEditarPage";
+import { AtraccionNuevaPage } from "@/pages/AtraccionNuevaPage";
 import { AtraccionEditarPage } from "@/pages/AtraccionEditarPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 
@@ -88,39 +93,19 @@ const router = createBrowserRouter([
           { path: "ferias/:fairId/editar", element: <FeriaEditarPage /> },
           {
             path: "ferias/:fairId/ediciones/nueva",
-            element: (
-              <PendingBackendPage
-                title="Nueva edicion"
-                description="La creacion de ediciones de feria requiere commands Tauri que el backend Rust de la epica 1 no expuso (create_fair_edition, list_fair_editions, update_fair_edition, delete_fair_edition)."
-              />
-            ),
+            element: <EdicionNuevaPage />,
           },
           {
             path: "ferias/:fairId/ediciones/:edicionId",
-            element: (
-              <PendingBackendPage
-                title="Detalle de la edicion"
-                description="Esta pantalla listaria las atracciones de la edicion (create/list/update de atracciones ya estan operativos en el backend)."
-              />
-            ),
+            element: <EdicionDetallePage />,
           },
           {
             path: "ferias/:fairId/ediciones/:edicionId/editar",
-            element: (
-              <PendingBackendPage
-                title="Editar edicion"
-                description="La edicion de fechas, ano y estado requiere commands Tauri no expuestos."
-              />
-            ),
+            element: <EdicionEditarPage />,
           },
           {
             path: "ferias/:fairId/ediciones/:edicionId/atracciones/nueva",
-            element: (
-              <PendingBackendPage
-                title="Nueva atraccion"
-                description="Requiere que la edicion exista (commands de FairEdition pendientes)."
-              />
-            ),
+            element: <AtraccionNuevaPage />,
           },
           {
             path: "ferias/:fairId/ediciones/:edicionId/atracciones/:atraccionId/editar",
