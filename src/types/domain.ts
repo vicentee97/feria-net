@@ -94,6 +94,35 @@ export interface UpdateAttractionInput {
   base_ticket_price?: number;
 }
 
+/**
+ * Input para `create_fair_edition`.
+ *
+ * NO contiene `fair_id`: llega como argumento separado del command
+ * (`fair_id: String` en Rust). Encaja con la firma
+ * `createFairEdition(fairId, input)` del frontend.
+ */
+export interface CreateFairEditionInput {
+  year: number;
+  /** ISO 8601 `YYYY-MM-DD` (fecha local del operador). */
+  start_date: string;
+  /** ISO 8601 `YYYY-MM-DD`. */
+  end_date: string;
+  status: FairEditionStatus;
+}
+
+/**
+ * Input para `update_fair_edition`. Campos `undefined` no se tocan.
+ * Refleja `Partial<Omit<FairEdition, "id" | "fair_id" | "created_at">>`.
+ * `fair_id` no es actualizable: la edicion queda ligada a la feria
+ * bajo la que fue creada.
+ */
+export interface UpdateFairEditionInput {
+  year?: number;
+  start_date?: string;
+  end_date?: string;
+  status?: FairEditionStatus;
+}
+
 // ============================================================
 // Errores (espejo de src-tauri/src/errors.rs SerializableError)
 // ============================================================
