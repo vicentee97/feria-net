@@ -27,5 +27,6 @@ Indice vivo de equipos de trabajo del proyecto. Convencion vigente:
 | [TEAM-002](archive/TEAM-002-configurar-github-primer-commit.md) | Configurar GitHub y primer commit | cerrado | 2026-06-26 | 2026-06-26 |
 | [TEAM-003](archive/TEAM-003-epica-1-backend.md) | Epica 1 backend + base frontend | cerrado | 2026-06-26 | 2026-06-26 |
 | [TEAM-004](archive/TEAM-004-epica-1-frontend.md) | Epica 1 frontend (UI ferias + atracciones) | cerrado | 2026-06-26 | 2026-06-26 |
+| [TEAM-005](archive/TEAM-005-epica-1-editions-backend.md) | Epica 1 backend de ediciones (FairEdition) | cerrado | 2026-06-26 | 2026-06-26 |
 
 Repositorio remoto: <https://github.com/vicentee97/feria-net>.
