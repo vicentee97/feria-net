@@ -5,9 +5,8 @@
 //! - `(fair_id, year)` es UNIQUE.
 //! - `end_date >= start_date`.
 //! - Solo una edicion por `fair_id` puede tener `status = active`
-//!   a la vez (regla §5.10). Esta invariante **no** se enforcea
-//!   en backend todavia; queda como riesgo abierto documentado
-//!   en TEAM-005.
+//!   a la vez (regla §5.10). **Enforced en backend** desde V002
+//!   mediante un indice UNIQUE parcial (TEAM-007 cierra R1).
 //!
 //! Validaciones de aplicacion:
 //! - `year BETWEEN 1900 AND 2100`.
@@ -16,6 +15,9 @@
 //! - `fair_id` debe existir en `fair`.
 //!
 //! La traduccion de errores de SQLite distingue:
+//! - `UNIQUE constraint failed` por el indice parcial V002 (R1)
+//!   -> `AppError::UniqueViolation` con el mensaje canonico sobre
+//!   conflicto de edicion activa.
 //! - `UNIQUE constraint failed` (en `fair_edition.fair_id` / `.year`)
 //!   -> `AppError::UniqueViolation` con el año concreto que se intento.
 //! - `FOREIGN KEY constraint failed` (al borrar con atracciones)
@@ -331,11 +333,25 @@ fn row_to_edition(row: &Row<'_>) -> rusqlite::Result<FairEdition> {
     })
 }
 
+/// Mensaje que el usuario ve cuando intenta dejar dos ediciones
+/// `active` en la misma feria (R1, V002). Coherente con el texto
+/// del `ActivateEditionDialog` pero en forma imperativa, ya que
+/// llega cuando el dialog no estaba presente (p. ej. `create_fair_edition`
+/// directo, `update_edition` cambiando status, o un cliente externo).
+const ACTIVE_EDITION_CONFLICT_MSG: &str = "Ya existe una edición activa para esta feria. \
+     Cierra la edición activa actual antes de activar otra.";
+
 /// Traduce errores de SQLite a `AppError` con la semantica que
 /// la UI necesita.
 ///
-/// - `UNIQUE constraint failed` sobre `fair_edition` => `UniqueViolation`
-///   con el año concreto que se intento (si llega como contexto).
+/// - `UNIQUE constraint failed` por el indice parcial
+///   `idx_fair_edition_one_active_per_fair` => `UniqueViolation` con
+///   el mensaje canonico de R1. La diferenciacion del otro UNIQUE
+///   `(fair_id, year)` se hace por el formato de columnas en el
+///   mensaje (ver nota en `V002__one_active_edition_per_fair.sql`).
+/// - `UNIQUE constraint failed` sobre `(fair_id, year)` =>
+///   `UniqueViolation` con el año concreto que se intento (si llega
+///   como contexto).
 /// - `FOREIGN KEY constraint failed` al borrar => `ConstraintViolation`
 ///   con mensaje claro sobre atracciones asociadas.
 /// - Cualquier otra `ConstraintViolation` => `ConstraintViolation`
@@ -345,6 +361,17 @@ fn classify_db_err(e: rusqlite::Error, attempted_year: Option<i32>) -> AppError 
     if let rusqlite::Error::SqliteFailure(err, _) = &e {
         if err.code == rusqlite::ErrorCode::ConstraintViolation {
             let msg = e.to_string();
+            // Indice parcial V002 sobre `fair_edition(fair_id) WHERE
+            // status='active'`: SQLite emite el mensaje como
+            // "UNIQUE constraint failed: fair_edition.fair_id" (una
+            // sola columna, sin coma). Se distingue del UNIQUE
+            // (fair_id, year) que produce "fair_edition.fair_id,
+            // fair_edition.year".
+            if msg.starts_with("UNIQUE constraint failed: fair_edition.fair_id")
+                && !msg.contains("year")
+            {
+                return AppError::UniqueViolation(ACTIVE_EDITION_CONFLICT_MSG.to_string());
+            }
             if msg.contains("UNIQUE constraint failed") && msg.contains("fair_edition") {
                 let detail = match attempted_year {
                     Some(y) => format!(
