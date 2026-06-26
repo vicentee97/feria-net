@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability principal para la ventana main de FeriaNet. Solo permisos necesarios para la epica 1 (CRUD de ferias y atracciones). Los plugins fs, serial, hid y shell llegan en epicas 3+ y requeriran capabilities adicionales.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "opener:default"
+  ]
+}

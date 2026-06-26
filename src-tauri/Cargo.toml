@@ -1,0 +1,76 @@
+[package]
+name = "feria-net"
+version = "0.1.0"
+description = "FeriaNet — herramienta de gestion de ventas para feriantes"
+authors = ["Vicente"]
+edition = "2021"
+rust-version = "1.78"
+
+# Ver https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# El sufijo `_lib` evita el conflicto conocido entre el binario y la
+# libreria en Windows (rust-lang/cargo#8519). Mantener para todos los
+# scaffolds Tauri 2.x.
+name = "feria_net_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+# Binario de arranque. main.rs delega en `feria_net_lib::run()`.
+name = "feria-net"
+path = "src/main.rs"
+
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# --- Runtime Tauri ---
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+
+# --- Serializacion ---
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# --- Persistencia local SQLite ---
+# rusqlite con feature `bundled` compila SQLite estatico dentro del
+# binario, evitando depender de la version del sistema operativo.
+# Version elegida: 0.40.x (latest stable, antes 0.32.x del brief).
+# Desviacion documentada como P3: la 0.32.x data de 2024-07; latest
+# stable integra bug-fixes y es compatible con Tauri 2.11.
+rusqlite = { version = "0.40", features = ["bundled", "chrono"] }
+
+# rusqlite_migration 2.x (latest stable, antes 1.x del brief).
+# Misma justificacion de desviacion que rusqlite. Mantener migraciones
+# versionadas sobre PRAGMA user_version, sin SQL embebido en tabla.
+rusqlite_migration = "2"
+
+# --- Dominio: tipos e identificadores ---
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+# --- Errores y logging ---
+thiserror = "1"  # API estable LTS; latest es 2.0 con breaking changes.
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# --- Async runtime (necesario para comandos async en Tauri) ---
+tokio = { version = "1", features = ["sync", "rt", "rt-multi-thread", "macros"] }
+async-trait = "0.1"
+
+# --- HTTP client (sync, cuando llegue la epica 5) ---
+# reqwest 0.12 con rustls: TLS sin depender de OpenSSL del sistema.
+# La dep se anade pero no se usa hasta la epica 5.
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+
+[features]
+# Esta feature se usa para tener codigo adicional durante el desarrollo.
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+panic = "abort"        # Binarios pequenos y sin overhead de unwind.
+codegen-units = 1      # Mejor optimizacion en release.
+lto = true             # Link-time optimization.
+opt-level = "s"        # Optimiza tamano del binario.
+strip = true           # Simbolos no necesarios fuera de debug.

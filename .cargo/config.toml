@@ -1,0 +1,33 @@
+# ============================================================
+# .cargo/config.toml — FeriaNet
+# Configuracion local de cargo para compilacion en Windows.
+# Aporta las variables LIB e INCLUDE del toolchain MSVC
+# (Build Tools 2022 + Windows 10 SDK 26100) sin requerir que el
+# usuario abra un Developer Command Prompt.
+#
+# Esto es SOLO para entorno local de desarrollo. No se distribuye
+# con binarios (los instaladores MSI/EXE empaquetados llevan sus
+# propias dependencias estaticas via la feature `bundled` de
+# rusqlite).
+#
+# Plataforma: Windows-first.
+# Encoding: UTF-8 sin BOM, saltos de linea LF (estandar cargo).
+# ============================================================
+
+# Si cambias de version de MSVC o Windows SDK en esta maquina,
+# actualiza los paths de abajo (MSVC_TOOLS, WIN10_SDK).
+
+[env]
+LIB = { value = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\lib\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\lib\\10.0.26100.0\\ucrt\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\lib\\10.0.26100.0\\um\\x64", force = false }
+INCLUDE = { value = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\include;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.26100.0\\ucrt;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.26100.0\\um;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.26100.0\\shared;C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.26100.0\\winrt", force = false }
+PATH = { value = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64;C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.26100.0\\x64", force = false }
+
+# Target por defecto explicito (estable aunque cambien defaults globales).
+[build]
+target = "x86_64-pc-windows-msvc"
+
+[target.x86_64-pc-windows-msvc]
+# Mantener el linker por defecto de MSVC. cc-rs detecta vswhere
+# automaticamente; las variables anteriores garantizan que link.exe
+# encuentre msvcrt.lib, kernel32.lib y resto del Windows SDK.
+linker = "link.exe"
