@@ -12,7 +12,6 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// Estado operativo de una edicion de feria.
-#[allow(dead_code)] // Se usa en V002 (CRUD de ediciones).
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum FairEditionStatus {
@@ -24,7 +23,6 @@ pub enum FairEditionStatus {
     Closed,
 }
 
-#[allow(dead_code)] // Metodos de conversion, se usan en V002.
 impl FairEditionStatus {
     /// Cadena usada en SQLite CHECK constraint.
     pub fn as_str(&self) -> &'static str {
@@ -47,7 +45,6 @@ impl FairEditionStatus {
 }
 
 /// Edicion anual concreta de una feria.
-#[allow(dead_code)] // Se usa en V002 (CRUD de ediciones).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct FairEdition {
     pub id: Uuid,
