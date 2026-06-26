@@ -1,0 +1,105 @@
+# ============================================================
+# .gitignore — FeriaNet
+# Base general + especifico del stack:
+#   Tauri 2.x (Rust) + React 19 + Vite + Tailwind v4 + shadcn/ui
+#   SQLite local + Supabase (sync opcional)
+# Plataforma: Windows-first.
+# Encoding: UTF-8 sin BOM, saltos de linea CRLF (Windows).
+# ============================================================
+
+# --- Sistema operativo ---
+# No versionar metadatos del SO ni caches locales.
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+ehthumbs_vista.db
+$RECYCLE.BIN/
+
+# --- Editores e IDEs ---
+# Config local de usuario; nunca debe contaminar el repo.
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# --- Logs ---
+# Logs de tooling; se regeneran en cada ejecucion.
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- Variables de entorno y secretos ---
+# NUNCA versionar secretos, claves, tokens ni credenciales.
+# Usar .env.example versionado y .env.local ignorado.
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+config/local.*
+
+# --- Node / Vite ---
+# Artefactos generados por npm/pnpm/yarn y por Vite.
+node_modules/
+dist/
+.vite/
+build/
+coverage/
+*.tsbuildinfo
+.cache/
+.turbo/
+.parcel-cache/
+
+# --- Rust / Tauri ---
+# target/ es donde Rust compila; nunca versionar.
+# Cargo.lock SI se versiona: FeriaNet es aplicacion, no libreria.
+src-tauri/target/
+src-tauri/gen/
+src-tauri/Cargo.lock.bak
+**/*.rs.bk
+*.pdb
+
+# Backend cloud local (Supabase CLI cache)
+supabase/.branches/
+supabase/.temp/
+supabase/.env
+
+# --- Temporales del hub y de IA ---
+# .ai-work/ es el namespace del hub para tareas en curso.
+# *.restore_* son staging de recuperacion del orquestador.
+.ai-work/
+*.tmp
+*.bak
+*.restore_*
+.restore/
+
+# --- SQLite local ---
+# La base de datos del TPV es estado de runtime, no fuente.
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# --- Tickets impresos de prueba ---
+# Archivos que el modulo FileDelivery escribe en depuracion.
+tickets-debug/
+print-spool/
+
+# --- Salidas del propio repo ---
+# Lo que el usuario o las herramientas colocan en raiz sin querer.
+*.local
+*.local.*

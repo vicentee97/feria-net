@@ -1,0 +1,21 @@
+> Este checklist completo se usa cuando el brief dice UI crítica o el proyecto es de alta visibilidad.
+
+- [ ] La metadata contextual importante está integrada en la cabecera y no parece flotante o decorativa.
+- [ ] La pantalla se siente operativa y directiva, no solo limpia o correcta.
+- [ ] Dejé solo el texto que cambia comprensión o decisión.
+- [ ] El CTA principal domina sin gritar.
+- [ ] Existe ritmo visual suficiente y no todos los bloques hablan con la misma intensidad.
+- [ ] Los paneles laterales tienen ancho realista para el contenido que contienen.
+- [ ] La composición seguiría viva y clara aunque muchos valores estén en cero o casi sin actividad.
+- [ ] Los bloques de resumen se leen claramente como métrica compacta o como tabla, sin quedarse a medio camino.
+- [ ] Las métricas hermanas forman subconjuntos reconocibles y no solo comparten una línea base.
+- [ ] La pieza se sigue viendo equilibrada en portátil común y en escritorio ancho.
+- [ ] Si la pantalla vive sobre una superficie plana, los grupos siguen quedando claros sin depender de cajas extra.
+- [ ] El resumen y el detalle tienen un corte visual suficiente y no parecen una sola masa de texto.
+- [ ] El detalle operativo mantiene una lectura compacta y estable sin dispersar demasiado etiquetas e importes.
+- [ ] Los separadores del detalle rematan la estructura, pero no cargan ellos solos con la jerarquía.
+- [ ] La estructura no depende de bordes negros o divisores demasiado agresivos para poder entenderse.
+- [ ] La materialidad de superficies, bloques y controles se siente refinada y coherente, no como un wireframe endurecido.
+- [ ] La pantalla funciona en mobile sin colapsos raros.
+- [ ] La navegación por teclado funciona en elementos interactivos.
+- [ ] Las imágenes de contenido tienen `alt` text.

@@ -1,0 +1,272 @@
+@echo off
+REM =====================================================================
+REM dev.bat - Plantilla canonica del hub CerebroOperativoIA
+REM ---------------------------------------------------------------------
+REM Esta plantilla NO es copia-pega literal. Es un material auxiliar para
+REM que la IA aplique la skill `generar-bat-interactivo` con un esqueleto
+REM consistente, encabezado, helpers y prefijos ya fijados.
+REM
+REM Reglas duras (ver skill `generar-bat-interactivo` ->
+REM "# Estandar canonico obligatorio"):
+REM   - Nombre fijo: dev.bat en .scripts/dev.bat.
+REM   - Encoding UTF-8 sin BOM.
+REM   - Idioma del UI: espanol.
+REM   - Prefijos obligatorios: [INFO], [OK], [WARN], [ERROR].
+REM   - Confirmaciones obligatorias antes de matar procesos, borrar caches
+REM     o destruir artefactos.
+REM   - Prohibido hardcodear credenciales; leer solo de .env o variables
+REM     de entorno.
+REM   - Estructura: menu unico. Iniciar/detener/reiniciar son opciones
+REM     del mismo menu, no scripts separados.
+REM
+REM Como adaptar este esqueleto:
+REM   1. Sustituir <NombreProyecto> por el nombre real del proyecto.
+REM   2. Activar o desactivar los bloques marcados con
+REM      `REM [INCLUIR SI: ...]` segun el stack detectado en el proyecto.
+REM   3. Verificar cada comando contra package.json, *.sln, pyproject.toml
+REM      o equivalente real. No inventar tooling.
+REM   4. Reemplazar <puerto_dev> por el puerto que use el proyecto (3000,
+REM      5173, 8000, etc.). Comprobar en su configuracion.
+REM   5. Ajustar <comando_dev> al script real del proyecto (npm run dev,
+REM      dotnet watch, vite, etc.).
+REM =====================================================================
+
+chcp 65001 >nul
+setlocal EnableExtensions EnableDelayedExpansion
+title <NombreProyecto> - menu de desarrollo
+
+REM ---------------------------------------------------------------------
+REM Configuracion base del proyecto
+REM ---------------------------------------------------------------------
+set "PROJECT_NAME=<NombreProyecto>"
+REM PROJECT_ROOT apunta a la raiz del proyecto (donde esta package.json).
+REM Si este .bat vive en la raiz, %~dp0 ya es correcto. Si vive en una
+REM subcarpeta auxiliar (.scripts\), PROJECT_ROOT es la carpeta madre.
+if exist "%~dp0package.json" (
+    set "PROJECT_ROOT=%~dp0"
+) else (
+    for %%I in ("%~dp0\..") do set "PROJECT_ROOT=%%~fI\"
+)
+cd /d "%PROJECT_ROOT%"
+set "PORT_DEV=<puerto_dev>"
+
+REM ---------------------------------------------------------------------
+REM Deteccion de stack
+REM ---------------------------------------------------------------------
+REM [INCLUIR SI: vitest detectado]
+set "HAS_VITEST=0"
+if exist "vitest.config.ts" set "HAS_VITEST=1"
+if exist "vitest.config.js" set "HAS_VITEST=1"
+if exist "vitest.config.mjs" set "HAS_VITEST=1"
+
+REM [INCLUIR SI: playwright detectado]
+set "HAS_PLAYWRIGHT=0"
+if exist "playwright.config.ts" set "HAS_PLAYWRIGHT=1"
+if exist "playwright.config.js" set "HAS_PLAYWRIGHT=1"
+
+REM [INCLUIR SI: docker presente]
+set "HAS_DOCKER=0"
+where docker >nul 2>nul && set "HAS_DOCKER=1"
+
+REM [INCLUIR SI: cloudflared presente]
+set "HAS_CLOUDFLARED=0"
+where cloudflared >nul 2>nul && set "HAS_CLOUDFLARED=1"
+
+REM [INCLUIR SI: multiples paquetes npm]
+REM Si el proyecto es un monorepo con packages/, apps/ o workspaces en
+REM package.json, fijar aqui las rutas individuales para iterar.
+set "WORKSPACE_DIRS="
+
+REM [INCLUIR SI: backend .NET + frontend Node]
+set "HAS_DOTNET=0"
+where dotnet >nul 2>nul && set "HAS_DOTNET=1"
+
+REM ---------------------------------------------------------------------
+REM Helpers
+REM ---------------------------------------------------------------------
+goto :main_menu
+
+:print_section
+REM Imprime una cabecera de seccion con prefijo [INFO].
+REM Uso: call :print_section "Titulo de la seccion"
+echo.
+echo [INFO] %~1
+echo ----------------------------------------
+goto :eof
+
+:ensure_project
+REM Aborta con [ERROR] si no estamos dentro de un proyecto detectable.
+if not exist "package.json" (
+    if not exist "*.sln" (
+        if not exist "pyproject.toml" (
+            echo [ERROR] No se detecta package.json, *.sln ni pyproject.toml en %PROJECT_ROOT%.
+            echo [ERROR] Ejecuta este script desde la raiz del proyecto.
+            exit /b 1
+        )
+    )
+)
+goto :eof
+
+:detect_package_manager
+REM Detecta gestor de paquetes Node: pnpm > yarn > npm > bun.
+set "PKG_MANAGER=npm"
+where pnpm >nul 2>nul && set "PKG_MANAGER=pnpm" && goto :eof
+where yarn >nul 2>nul && set "PKG_MANAGER=yarn" && goto :eof
+where bun >nul 2>nul && set "PKG_MANAGER=bun" && goto :eof
+goto :eof
+
+:check_port
+REM Comprueba si el puerto %PORT_DEV% esta libre.
+REM Muestra el PID que lo ocupa si esta en uso.
+set "PORT_IN_USE=0"
+set "PORT_PID="
+for /f "tokens=5" %%P in ('netstat -ano ^| findstr ":%PORT_DEV% " ^| findstr "LISTENING"') do (
+    set "PORT_IN_USE=1"
+    set "PORT_PID=%%P"
+)
+goto :eof
+
+REM =====================================================================
+REM Menu principal
+REM =====================================================================
+:main_menu
+call :ensure_project
+call :detect_package_manager
+cls
+echo.
+echo  ======================================================
+echo   %PROJECT_NAME% - menu de desarrollo
+echo  ======================================================
+echo   Gestor detectado: %PKG_MANAGER%
+echo   Puerto dev:       %PORT_DEV%
+echo  ------------------------------------------------------
+echo   1 - Modo desarrollo
+echo   2 - Diagnostico del entorno
+echo   3 - %PKG_MANAGER% install (reinstalar dependencias)
+echo   4 - Salir
+echo  ======================================================
+echo.
+set /p "MENU_OPT=Selecciona una opcion [1-4]: "
+
+if "%MENU_OPT%"=="1" goto :opt_dev
+if "%MENU_OPT%"=="2" goto :opt_diag
+if "%MENU_OPT%"=="3" goto :opt_install
+if "%MENU_OPT%"=="4" goto :opt_exit
+
+echo [WARN] Opcion no valida: "%MENU_OPT%". Intentalo de nuevo.
+pause
+goto :main_menu
+
+REM ---------------------------------------------------------------------
+REM Opcion 1 - Modo desarrollo
+REM ---------------------------------------------------------------------
+:opt_dev
+call :print_section "Modo desarrollo"
+call :check_port
+if "%PORT_IN_USE%"=="1" (
+    echo [WARN] El puerto %PORT_DEV% ya esta ocupado por PID %PORT_PID%.
+    echo [INFO] Intentando atribuirlo al proyecto actual...
+    REM Hipotesis: el PID pertenece al proyecto si su linea de comando
+    REM contiene %PROJECT_NAME% o la ruta del proyecto. Ajustar el match
+    AL puerto_real^=comprobando_otros_procesos_con_wmic_o_tasklist
+    echo [WARN] No se ha podido atribuir el puerto con seguridad.
+    echo [WARN] Pidele al usuario que decida si terminarlo manualmente.
+    set /p "KILL_CONFIRM=^> Escribe SI para intentar terminar el PID %PORT_PID%: "
+    if /i not "!KILL_CONFIRM!"=="SI" (
+        echo [INFO] Operacion cancelada por el usuario.
+        pause
+        goto :main_menu
+    )
+    taskkill /F /PID %PORT_PID%
+    if errorlevel 1 (
+        echo [ERROR] No se pudo terminar el PID %PORT_PID%. Abortando.
+        pause
+        goto :main_menu
+    )
+    echo [OK] PID %PORT_PID% terminado.
+)
+
+echo [INFO] Lanzando %PKG_MANAGER% run dev...
+REM [INCLUIR SI: multiples paquetes npm] Iterar sobre WORKSPACE_DIRS si aplica.
+call %PKG_MANAGER% run dev
+echo [WARN] El servidor se ha detenido.
+pause
+goto :main_menu
+
+REM ---------------------------------------------------------------------
+REM Opcion 2 - Diagnostico del entorno
+REM ---------------------------------------------------------------------
+:opt_diag
+call :print_section "Diagnostico del entorno"
+
+echo [INFO] Version de Node:
+where node >nul 2>nul && (node --version) || echo [WARN] Node no detectado.
+
+echo [INFO] Version de %PKG_MANAGER%:
+where %PKG_MANAGER% >nul 2>nul && (%PKG_MANAGER% --version) || echo [WARN] %PKG_MANAGER% no detectado.
+
+REM [INCLUIR SI: docker presente]
+if "%HAS_DOCKER%"=="1" (
+    echo [INFO] Docker detectado. Version:
+    docker --version
+) else (
+    echo [WARN] Docker no detectado en PATH.
+)
+
+REM [INCLUIR SI: vitest detectado]
+if "%HAS_VITEST%"=="1" echo [INFO] Vitest detectado.
+
+REM [INCLUIR SI: playwright detectado]
+if "%HAS_PLAYWRIGHT%"=="1" echo [INFO] Playwright detectado.
+
+REM [INCLUIR SI: cloudflared presente]
+if "%HAS_CLOUDFLARED%"=="1" echo [INFO] cloudflared detectado.
+
+REM [INCLUIR SI: backend .NET + frontend Node]
+if "%HAS_DOTNET%"=="1" (
+    echo [INFO] dotnet detectado. Version:
+    dotnet --version
+)
+
+call :check_port
+if "%PORT_IN_USE%"=="1" (
+    echo [WARN] Puerto %PORT_DEV% ocupado por PID %PORT_PID%.
+) else (
+    echo [OK] Puerto %PORT_DEV% libre.
+)
+
+echo.
+pause
+goto :main_menu
+
+REM ---------------------------------------------------------------------
+REM Opcion 3 - Reinstalar dependencias
+REM ---------------------------------------------------------------------
+:opt_install
+call :print_section "Reinstalar dependencias"
+set /p "CONFIRM=^> Esto reinstalara node_modules. Escribe SI para continuar: "
+if /i not "%CONFIRM%"=="SI" (
+    echo [INFO] Operacion cancelada.
+    pause
+    goto :main_menu
+)
+if exist "node_modules" (
+    echo [WARN] Eliminando node_modules existente...
+    rmdir /S /Q "node_modules"
+)
+call %PKG_MANAGER% install
+if errorlevel 1 (
+    echo [ERROR] Fallo la instalacion.
+) else (
+    echo [OK] Dependencias reinstaladas.
+)
+pause
+goto :main_menu
+
+REM ---------------------------------------------------------------------
+REM Opcion 4 - Salir
+REM ---------------------------------------------------------------------
+:opt_exit
+echo [INFO] Saliendo del menu de desarrollo de %PROJECT_NAME%.
+endlocal
+exit /b 0

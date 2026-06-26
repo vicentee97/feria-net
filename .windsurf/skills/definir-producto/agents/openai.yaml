@@ -1,0 +1,3 @@
+display_name: Definir Producto
+short_description: Clarifica producto, módulos, fase y mapa funcional antes de arquitectura o código.
+default_prompt: Define el producto real de este proyecto o de esta nueva superficie antes de pasar a arquitectura, reglas o implementación.
