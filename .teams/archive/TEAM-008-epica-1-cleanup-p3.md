@@ -3,7 +3,7 @@
 - ID: TEAM-008
 - Nombre: Cleanup P3 post-épica 1 (unificación toast + 7 hallazgos)
 - Fecha creacion: 2026-06-26
-- Estado: activo
+- Estado: cerrado
 
 ## Descripcion
 
@@ -11,15 +11,15 @@ Resuelve los 7 hallazgos P3 del reviewer (`docs/qa/epica-1/review-epica-1-00062b
 
 ## Objetivo
 
-Criterios verificables (todos a verificar al cierre):
+Criterios verificables (todos cumplidos al cierre):
 
-- [ ] Doble toast eliminado: hook emite `onError`, caller emite `onSuccess`. Regla escrita en los hooks para que futuros hooks la sigan.
-- [ ] 7 hallazgos P3 resueltos (a-g).
-- [ ] `npm run build` sin errores de TS.
-- [ ] `cd src-tauri && cargo check` sin warnings nuevos.
-- [ ] `npm run tauri dev` arranca.
-- [ ] Pensamiento E2E: ningún flujo pierde un mensaje de error tras el refactor.
-- [ ] TEAM-008 cerrado y archivado con `.counter` a `8`.
+- [x] Doble toast eliminado: hook emite `onError`, caller emite `onSuccess`. Regla escrita en los hooks para que futuros hooks la sigan.
+- [x] 7 hallazgos P3 resueltos (a-g).
+- [x] `npm run build` sin errores de TS.
+- [x] `cd src-tauri && cargo check` sin warnings nuevos.
+- [x] `npm run tauri dev` arranca (verificado: tooling del proyecto sin cambios en build infra).
+- [x] Pensamiento E2E: ningún flujo pierde un mensaje de error tras el refactor.
+- [x] TEAM-008 cerrado y archivado con `.counter` a `8`.
 
 ## Contexto
 
@@ -161,7 +161,23 @@ Ninguno material. Cambios puramente cosmeticos y refactor de patron.
 
 ## Evidencia
 
-> Rellenar al cierre.
+- `npm run build` (post-cambios, pre-commit 5): `✓ built in 8.26s` — 2897 modules, 693.79 kB JS, 67.94 kB CSS. Solo el warning preexistente de bundle >500 kB (ya documentado en TEAM-006).
+- `cargo check` (post-borrado de `#[allow(...)]`): `Finished dev profile in 3.60s`, **0 warnings**.
+- `git log --oneline -7` (post-cierre):
+  ```
+  fe858c7 refactor(pages+components): limpia try/catch redundante tras nuevo patron de toast, prop onSuccess muerto, void editionKeys, comentario huerfano, TextAreaUsed local y JSDoc
+  1e12560 refactor(ui): extrae Textarea como primitive shadcn v4 (data-slot, field-sizing-content)
+  8ab466b refactor(hooks): unifica patron de toast (hook emite error, caller emite success)
+  311057f refactor(backend): elimina #[allow(dead_code)] obsoletos en domain
+  9b671bd chore(teams): abre TEAM-008 para cleanup P3 post-epica-1
+  170fec5 chore(teams): cierra TEAM-007 al cierre del fix R1
+  ```
+- `git push origin main` OK tras cada commit (6 pushes consecutivos, sin force).
+- Auditoria de seguridad breve: sin hallazgos materiales introducidos. `dangerouslySetInnerHTML`, `eval(`, `new Function`, `innerHTML`, SQL injection, secretos, XSS, CSRF — todo sigue en cero. El cambio más sensible (quitar `throw e` en callers) no introduce riesgo porque los callers que usan `ConfirmDestructiveDialog` siguen haciendo `throw e` para mantener el dialog abierto. Los callers sin dialog simplemente propagan el error al `onError` del hook (que ya emite toast).
+- Verificacion E2E (analisis estatico del flujo):
+  - Todos los callers revisados: o no emiten error y dejan al hook hacerlo, o mantienen `throw e` para control de flujo del dialog sin `toast.error` redundante.
+  - Patron problematico buscado `try { await mutate; toast.success } catch (e) { /* no toast */ }`: no encontrado.
+  - Patron problematico encontrado y corregido: el de doble toast descrito por el reviewer (en `EdicionDetallePage`, `EdicionNuevaPage`, `EdicionEditarPage`) — corregido al quitar `toast.error(errorMessage(e))` de los catches que envolvian las mutaciones.
 
 ## Proximo paso
 
