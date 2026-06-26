@@ -19,10 +19,13 @@ import { toAppError } from "@/lib/errors";
 import type {
   Attraction,
   CreateAttractionInput,
+  CreateFairEditionInput,
   CreateFairInput,
   Fair,
   FairEdition,
+  FairEditionStatus,
   UpdateAttractionInput,
+  UpdateFairEditionInput,
   UpdateFairInput,
 } from "@/types/domain";
 
@@ -83,44 +86,88 @@ export async function suggestFairByName(name: string): Promise<Fair | null> {
 // ============================================================
 
 /**
- * NOTA: los commands de `FairEdition` (create, list, update, delete)
- * NO estan expuestos en el backend todavia (TEAM-003 cerro con
- * solo ferias + atracciones). Las funciones siguientes son **stubs**
- * que documentan la intencion y daran un error claro si se invocan.
- * Cuando backend exponga los commands, solo hay que reemplazar el
- * cuerpo de cada funcion.
+ * Lista las ediciones de una feria, ordenadas por ano descendente
+ * (regla del backend, ver `src-tauri/src/commands/editions.rs`).
  */
-
-class NotImplementedError extends Error {
-  constructor(command: string) {
-    super(
-      `El command Tauri "${command}" no esta implementado en el backend todavia. ` +
-        `Ver TEAM-004 para el seguimiento.`,
-    );
-    this.name = "NotImplementedError";
+export async function listFairEditions(fairId: string): Promise<FairEdition[]> {
+  try {
+    return await invoke<FairEdition[]>("list_fair_editions", { fairId });
+  } catch (e) {
+    throw toAppError(e);
   }
 }
 
-export async function listFairEditions(_fairId: string): Promise<FairEdition[]> {
-  throw new NotImplementedError("list_fair_editions");
-}
-
+/**
+ * Crea una nueva edicion dentro de la feria `fairId`.
+ *
+ * El backend valida:
+ *  - `year` en [1900, 2100].
+ *  - `start_date` / `end_date` en formato ISO 8601 `YYYY-MM-DD`.
+ *  - `end_date >= start_date`.
+ *  - UNIQUE `(fair_id, year)` -> `AppError("unique_violation", ...)`.
+ *  - FK `fair_id` -> `AppError("not_found", ...)` si la feria no existe.
+ */
 export async function createFairEdition(
-  _fairId: string,
-  _input: Omit<FairEdition, "id" | "fair_id" | "created_at">,
+  fairId: string,
+  input: CreateFairEditionInput,
 ): Promise<FairEdition> {
-  throw new NotImplementedError("create_fair_edition");
+  try {
+    return await invoke<FairEdition>("create_fair_edition", { fairId, input });
+  } catch (e) {
+    throw toAppError(e);
+  }
 }
 
+/**
+ * Actualiza una edicion existente. Campos `undefined` no se tocan.
+ * `fair_id` NO es actualizable (no aparece en el input).
+ */
 export async function updateFairEdition(
-  _id: string,
-  _input: Partial<Omit<FairEdition, "id" | "fair_id" | "created_at">>,
+  id: string,
+  input: UpdateFairEditionInput,
 ): Promise<FairEdition> {
-  throw new NotImplementedError("update_fair_edition");
+  try {
+    return await invoke<FairEdition>("update_fair_edition", { id, input });
+  } catch (e) {
+    throw toAppError(e);
+  }
 }
 
-export async function deleteFairEdition(_id: string): Promise<void> {
-  throw new NotImplementedError("delete_fair_edition");
+/**
+ * Elimina una edicion. Falla con `AppError("constraint_violation", ...)`
+ * si tiene atracciones asociadas (`ON DELETE RESTRICT` en la FK).
+ */
+export async function deleteFairEdition(id: string): Promise<void> {
+  try {
+    await invoke<void>("delete_fair_edition", { id });
+  } catch (e) {
+    throw toAppError(e);
+  }
+}
+
+/**
+ * Cambia solo el estado de una edicion (`planned` | `active` | `closed`).
+ *
+ * El backend recibe el status como string y lo valida; un valor invalido
+ * devuelve `AppError("invalid_input", ...)` con mensaje claro.
+ *
+ * IMPORTANTE: el backend NO enforcea la regla "una sola edicion active
+ * por feria" (data-model §5.10). El frontend la protege visualmente
+ * en los componentes que llaman a este helper; ver `ActivateEditionDialog`
+ * y los componentes de detalle/alta/edicion de edicion.
+ */
+export async function changeFairEditionStatus(
+  id: string,
+  status: FairEditionStatus,
+): Promise<FairEdition> {
+  try {
+    return await invoke<FairEdition>("change_fair_edition_status", {
+      id,
+      status,
+    });
+  } catch (e) {
+    throw toAppError(e);
+  }
 }
 
 // ============================================================
