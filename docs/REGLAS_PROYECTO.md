@@ -46,9 +46,36 @@ Tipos aceptados (alineados con Conventional Commits, en espanol):
 - `style`: formato, sin cambio logico.
 - `perf`: mejora de rendimiento.
 
+**Scopes habituales en FeriaNet** (no exhaustivo): `tauri`, `deps`, `db`,
+`domain`, `repo`, `commands`, `frontend`, `ui`, `docs`, `teams`.
+
 Las reglas finas de commit, rama, PR y release las formaliza `@experto-github`
-con la skill `configurar-github` cuando se cree el remoto. Esta seccion es el
-acuerdo minimo de partida.
+con la skill `configurar-github`. Esta seccion es el acuerdo minimo de partida.
+
+## Arranque local del stack Tauri + Rust
+
+Reglas operativas acordadas al cerrar la epica 1:
+
+- **Toolchain Rust**: instalar via `rustup` con toolchain por defecto
+  `stable-x86_64-pc-windows-msvc`. **No usar** `cargo install` global; las
+  dependencias Rust se instalan por proyecto via `cargo build`.
+- **MSVC Build Tools 2022 + Windows 10 SDK** son prerequisito para compilar
+  el binario Tauri en Windows. Sin ellos, `cargo build` falla con
+  `LNK1104: no se puede abrir el archivo 'msvcrt.lib'`.
+- **`.cargo/config.toml`** del repo fija `target`, `LIB`, `INCLUDE` y `PATH`
+  al toolchain detectado en esta maquina. Si cambias de maquina o version
+  de MSVC/SDK, actualiza ahi los paths antes de compilar.
+- **Primera compilacion**: `cargo build` desde `src-tauri/` tarda 3-5 min
+  (descarga ~500 crates y compila webview2-com, ring, rusqlite-sys con
+  SQLite embebido). Las siguientes son segundos.
+- **Comandos canonicos** (definidos en `.scripts/dev.bat`):
+  - `npm run tauri dev` — Vite + ventana Tauri en modo desarrollo.
+  - `npm run build` — TypeScript + Vite, genera `dist/`.
+  - `npm run tauri build` — produce instalador MSI/EXE en
+    `src-tauri/target/release/bundle/`.
+- **DB local** se crea automaticamente al primer arranque en
+  `%APPDATA%\com.ferianet.app\feria-net.db` (Windows). El archivo esta
+  en `.gitignore` (`*.db`, `*.db-wal`, `*.db-shm`).
 
 ## Prohibido versionar
 
