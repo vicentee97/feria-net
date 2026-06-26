@@ -3,7 +3,7 @@
 - ID: TEAM-002
 - Nombre: Configurar GitHub y primer commit
 - Fecha creacion: 2026-06-26
-- Estado: activo
+- Estado: cerrado
 
 ## Descripcion
 Crear el repositorio remoto en GitHub para FeriaNet, mover `dev.bat` de la raiz
