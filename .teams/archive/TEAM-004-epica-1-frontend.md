@@ -3,7 +3,7 @@
 - ID: TEAM-004
 - Nombre: Épica 1 frontend (UI ferias + atracciones)
 - Fecha creacion: 2026-06-26
-- Estado: activo
+- Estado: cerrado
 
 ## Descripcion
 
