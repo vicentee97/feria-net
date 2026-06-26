@@ -3,15 +3,26 @@
  *
  * Hooks de React Query para atracciones. Keys jerarquicas:
  *  - `["attractions", editionId]`  -> listado de una edicion.
+ *
+ * Patron de toasts unificado (ver `hooks/queries/editions.ts` para el
+ * detalle completo):
+ *  - `onError` lo emite el hook (mensaje canonico del backend).
+ *  - `onSuccess` lo emite el caller (wording dependiente de contexto).
+ *  - El caller NO envuelve la mutacion en `try/catch` solo para mostrar
+ *    el toast de error. Si lo necesita para control de flujo del dialog,
+ *    re-lanza el error sin emitir toast (el hook ya lo hace).
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
 import {
   createAttraction,
   listAttractionsByEdition,
   softDeleteAttraction,
   updateAttraction,
 } from "@/api/tauri";
+import { errorMessage } from "@/lib/errors";
 import type { CreateAttractionInput, UpdateAttractionInput } from "@/types/domain";
 
 export const attractionKeys = {
@@ -40,6 +51,9 @@ export function useCreateAttraction() {
         queryKey: attractionKeys.byEdition(attraction.fair_edition_id),
       });
     },
+    onError: (e) => {
+      toast.error(errorMessage(e));
+    },
   });
 }
 
@@ -58,6 +72,9 @@ export function useUpdateAttraction() {
         queryKey: attractionKeys.byEdition(attraction.fair_edition_id),
       });
     },
+    onError: (e) => {
+      toast.error(errorMessage(e));
+    },
   });
 }
 
@@ -70,6 +87,9 @@ export function useSoftDeleteAttraction() {
       qc.invalidateQueries({
         queryKey: attractionKeys.byEdition(editionId),
       });
+    },
+    onError: (e) => {
+      toast.error(errorMessage(e));
     },
   });
 }

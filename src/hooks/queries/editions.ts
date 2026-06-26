@@ -7,15 +7,24 @@
  *                                         en cliente desde el listado; el
  *                                         backend no expone `get_edition`).
  *
- * Notas operativas:
- *  - Cada hook expone `onSuccess` (toast verde) y `onError` (toast rojo
- *    con el `message` del `AppError`) para no obligar al caller a
- *    envolver las mutaciones con try/catch en cada pagina.
- *  - El caller sigue pudiendo manejar `try/catch` si necesita reaccionar
- *    al error de forma distinta (por ejemplo, mostrar un AlertDialog
- *    para la regla "una sola activa"). En ese caso, llamar a
- *    `mutation.mutate` (sin await) y dejar que el `onError` muestre el
- *    toast; el dialog se maneja en el submit del componente.
+ * Patron de toasts unificado (canonico para todos los hooks del proyecto):
+ *  - El hook emite SIEMPRE `onError` con `toast.error(message)` usando
+ *    el mensaje canonico del backend (viene del `AppError.message`
+ *    serializado).
+ *  - El hook NO emite `onSuccess`: el toast verde lo emite el caller
+ *    porque el wording depende del contexto (p.ej. "Edicion 2026 creada"
+ *    vs "Estado cambiado a active").
+ *  - El caller NO envuelve la mutacion en `try/catch` solo para mostrar
+ *    el toast de error. Si necesita reaccionar al exito (navegar,
+ *    recargar queries), usa el resultado de `await mutateAsync()` sin
+ *    try/catch: los errores se propagan al `onError` del hook.
+ *  - Excepcion documentada: cuando `onConfirm` se pasa a
+ *    `ConfirmDestructiveDialog` o a un dialog que precise control de
+ *    flujo, el caller mantiene `try/catch` para `throw` y evitar que el
+ *    dialog se cierre, pero NO emite `toast.error` dentro del catch
+ *    (lo hace el hook). El mismo patron aplica a `handleDialogConfirm`
+ *    en las paginas de edicion: el try/catch mantiene el dialog
+ *    abierto si falla, pero el toast lo emite el hook.
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -84,7 +93,6 @@ export function useCreateEdition(fairId: string) {
     onSuccess: (edition) => {
       qc.invalidateQueries({ queryKey: editionKeys.byFair(fairId) });
       qc.invalidateQueries({ queryKey: editionKeys.detail(edition.id) });
-      toast.success(`Edicion "${edition.year}" creada.`);
     },
     onError: (e) => {
       toast.error(errorMessage(e));
@@ -101,7 +109,6 @@ export function useUpdateEdition(fairId: string) {
     onSuccess: (edition) => {
       qc.invalidateQueries({ queryKey: editionKeys.byFair(fairId) });
       qc.invalidateQueries({ queryKey: editionKeys.detail(edition.id) });
-      toast.success(`Edicion "${edition.year}" actualizada.`);
     },
     onError: (e) => {
       toast.error(errorMessage(e));
@@ -117,9 +124,6 @@ export function useDeleteEdition(fairId: string) {
     onSuccess: (_void, id) => {
       qc.invalidateQueries({ queryKey: editionKeys.byFair(fairId) });
       qc.invalidateQueries({ queryKey: editionKeys.detail(id) });
-      // El toast de exito lo emite la pagina (tiene mas contexto sobre
-      // el nombre y a donde redirigir); aqui solo nos aseguramos de
-      // que la UI se refresca.
     },
     onError: (e) => {
       toast.error(errorMessage(e));
@@ -136,8 +140,6 @@ export function useChangeEditionStatus(fairId: string) {
     onSuccess: (edition) => {
       qc.invalidateQueries({ queryKey: editionKeys.byFair(fairId) });
       qc.invalidateQueries({ queryKey: editionKeys.detail(edition.id) });
-      // Toast emitido por la pagina para controlar el wording segun
-      // la transicion (planned -> active vs active -> closed etc).
     },
     onError: (e) => {
       toast.error(errorMessage(e));

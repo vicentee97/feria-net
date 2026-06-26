@@ -6,9 +6,23 @@
  *  - `["fairs"]`                  -> listado completo.
  *  - `["fairs", id]`              -> una feria concreta.
  *  - `["fairs", "suggest", name]` -> sugerencia por nombre.
+ *
+ * Patron de toasts unificado (ver `hooks/queries/editions.ts` para el
+ * detalle completo):
+ *  - `onError` lo emite el hook (mensaje canonico del backend).
+ *  - `onSuccess` lo emite el caller (wording dependiente de contexto).
+ *  - El caller NO envuelve la mutacion en `try/catch` solo para mostrar
+ *    el toast de error; los errores se propagan al `onError` del hook.
+ *    Si el caller necesita reaccionar al exito (navegar, recargar),
+ *    usa el resultado de `await mutateAsync()` sin try/catch.
+ *  - Excepcion: cuando `onConfirm` se pasa a `ConfirmDestructiveDialog`,
+ *    el caller mantiene `try/catch` para `throw` y que el dialog no se
+ *    cierre, pero NO emite `toast.error` (lo hace el hook).
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
 import {
   createFair,
   deleteFair,
@@ -17,6 +31,7 @@ import {
   suggestFairByName,
   updateFair,
 } from "@/api/tauri";
+import { errorMessage } from "@/lib/errors";
 import type { CreateFairInput, UpdateFairInput } from "@/types/domain";
 
 // Claves reutilizables para invalidaciones externas.
@@ -62,6 +77,9 @@ export function useCreateFair() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: fairKeys.all });
     },
+    onError: (e) => {
+      toast.error(errorMessage(e));
+    },
   });
 }
 
@@ -75,6 +93,9 @@ export function useUpdateFair() {
       qc.invalidateQueries({ queryKey: fairKeys.all });
       qc.invalidateQueries({ queryKey: fairKeys.detail(fair.id) });
     },
+    onError: (e) => {
+      toast.error(errorMessage(e));
+    },
   });
 }
 
@@ -85,6 +106,9 @@ export function useDeleteFair() {
     mutationFn: (id: string) => deleteFair(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: fairKeys.all });
+    },
+    onError: (e) => {
+      toast.error(errorMessage(e));
     },
   });
 }
