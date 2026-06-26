@@ -6,4 +6,5 @@
 //! vive en los repositorios.
 
 pub mod attractions;
+pub mod editions;
 pub mod fairs;
