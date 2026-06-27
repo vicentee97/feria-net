@@ -7,6 +7,7 @@
 //! - `open_cash_session(attraction_id, date, opening_amount_cents)`
 //!     -> `CashSession`.
 //! - `close_cash_session(id, closing_amount_cents)` -> `CashSession`.
+//! - `get_cash_session(id)` -> `Option<CashSession>`.
 //! - `get_open_cash_session(attraction_id)` -> `Option<CashSession>`.
 //! - `list_cash_sessions_for_attraction(attraction_id)`
 //!     -> `Vec<CashSession>`.
@@ -75,6 +76,23 @@ pub async fn close_cash_session(
     let uuid = parse_uuid(&id)?;
     cash_sessions::close_cash_session(&mut *state.db.conn().await, &uuid, input.closing_amount_cents)
         .map_err(Into::into)
+}
+
+/// Devuelve una `CashSession` por id (UUID como string desde TS),
+/// o `None` si no existe. Coherente con el resto de `get_*` del
+/// proyecto (`get_fair`, `get_attraction`, `get_sale`, ...).
+///
+/// Anadido en TEAM-011 para cerrar la P2 reportada por
+/// `@qa-validador` y `@revisor` (antes el frontend resolvía una
+/// caja por id via fan-out 4 niveles; ahora puede hacerlo con un
+/// solo invoke).
+#[tauri::command]
+pub async fn get_cash_session(
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<Option<CashSession>, SerializableError> {
+    let uuid = parse_uuid(&id)?;
+    cash_sessions::get_cash_session(&mut *state.db.conn().await, &uuid).map_err(Into::into)
 }
 
 /// Devuelve la caja abierta de una atraccion (si la hay).
