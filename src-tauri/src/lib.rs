@@ -11,9 +11,9 @@
 // ============================================================
 
 mod commands;
-mod db;
-mod domain;
-mod errors;
+pub mod db;
+pub mod domain;
+pub mod errors;
 mod state;
 
 use std::path::PathBuf;
@@ -23,7 +23,9 @@ use tauri::Manager;
 use tracing_subscriber::{fmt, EnvFilter};
 
 use crate::commands::{
-    attractions as cmd_attractions, editions as cmd_editions, fairs as cmd_fairs,
+    attractions as cmd_attractions, cash_sessions as cmd_cash_sessions,
+    editions as cmd_editions, fairs as cmd_fairs, offers as cmd_offers,
+    sales as cmd_sales,
 };
 use crate::db::DbPool;
 use crate::state::AppState;
@@ -87,6 +89,23 @@ pub fn run() {
             cmd_editions::update_fair_edition,
             cmd_editions::delete_fair_edition,
             cmd_editions::change_fair_edition_status,
+            // Caja diaria (TPV, epica 2 / TEAM-009)
+            cmd_cash_sessions::open_cash_session,
+            cmd_cash_sessions::close_cash_session,
+            cmd_cash_sessions::get_open_cash_session,
+            cmd_cash_sessions::list_cash_sessions_for_attraction,
+            cmd_cash_sessions::get_cash_session_for_attraction_on_date,
+            // Ofertas / bundles (TPV, epica 2 / TEAM-009)
+            cmd_offers::create_offer,
+            cmd_offers::list_offers_by_edition,
+            cmd_offers::update_offer,
+            cmd_offers::soft_delete_offer,
+            // Ventas y tickets pendientes (TPV, epica 2 / TEAM-009)
+            cmd_sales::create_sale,
+            cmd_sales::list_sales_by_cash_session,
+            cmd_sales::get_sale,
+            cmd_sales::get_ticket,
+            cmd_sales::list_pending_tickets_by_cash_session,
         ])
         .run(tauri::generate_context!())
         .expect("error al ejecutar la aplicacion Tauri");
