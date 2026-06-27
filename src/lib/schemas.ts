@@ -1,11 +1,12 @@
 /**
  * lib/schemas.ts — FeriaNet
  *
- * Esquemas Zod para los formularios de feria, edicion y atraccion.
- * Son la **fuente unica de validacion en cliente**: RHF los aplica
- * con `zodResolver`, y los mismos limites estructurales aparecen en
- * el backend (CHECK constraints en BD). Si un limite cambia aqui,
- * hay que actualizarlo en `src-tauri/migrations/`.
+ * Esquemas Zod para los formularios de feria, edicion, atraccion,
+ * caja, oferta y venta. Son la **fuente unica de validacion en
+ * cliente**: RHF los aplica con `zodResolver`, y los mismos limites
+ * estructurales aparecen en el backend (CHECK constraints en BD).
+ * Si un limite cambia aqui, hay que actualizarlo en
+ * `src-tauri/migrations/`.
  *
  * Mensajes en espanol, claros y orientados al feriante.
  */
@@ -111,3 +112,107 @@ export const attractionFormSchema = z.object({
 });
 
 export type AttractionFormValues = z.infer<typeof attractionFormSchema>;
+
+// ============================================================
+// Caja (CashSession)
+// ============================================================
+
+/**
+ * Schema para apertura de caja (`open_cash_session`).
+ *
+ * El usuario introduce el fondo inicial en EUR; convertimos a centimos
+ * en el submit antes de enviar al backend.
+ */
+export const openCashSessionFormSchema = z.object({
+  /** ISO 8601 `YYYY-MM-DD`. */
+  date: z
+    .string()
+    .regex(LOCAL_DATE_REGEX, "Fecha invalida (usa el selector de fecha)."),
+  /** Fondo inicial en EUR (>= 0). Convertido a centimos en submit. */
+  opening_amount_eur: z.coerce
+    .number()
+    .min(0, "El fondo inicial no puede ser negativo.")
+    .max(EUR_LIMITS.max, `El fondo maximo es ${EUR_LIMITS.max} EUR.`),
+});
+
+export type OpenCashSessionFormValues = z.infer<
+  typeof openCashSessionFormSchema
+>;
+
+/**
+ * Schema para cierre de caja (`close_cash_session`).
+ *
+ * El importe declarado al cierre puede NO coincidir con el teorico
+ * (la diferencia es visible en informes). Validamos >= 0.
+ */
+export const closeCashSessionFormSchema = z.object({
+  /** Importe declarado al cierre en EUR (>= 0). Convertido a centimos en submit. */
+  closing_amount_eur: z.coerce
+    .number()
+    .min(0, "El importe no puede ser negativo.")
+    .max(EUR_LIMITS.max, `El importe maximo es ${EUR_LIMITS.max} EUR.`),
+});
+
+export type CloseCashSessionFormValues = z.infer<
+  typeof closeCashSessionFormSchema
+>;
+
+// ============================================================
+// Oferta (Offer)
+// ============================================================
+
+export const offerFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "El nombre es obligatorio.")
+    .max(80, "Maximo 80 caracteres."),
+  /** Numero de tickets del bundle. >= 1. */
+  bundle_quantity: z.coerce
+    .number()
+    .int("La cantidad debe ser un numero entero.")
+    .min(1, "Minimo 1 ticket por pack.")
+    .max(10000, "Maximo 10000 tickets por pack."),
+  /** Precio total del bundle en EUR (>= 0). Convertido a centimos en submit. */
+  bundle_price_eur: z.coerce
+    .number()
+    .min(0, "El precio no puede ser negativo.")
+    .max(EUR_LIMITS.max, `El precio maximo es ${EUR_LIMITS.max} EUR.`),
+});
+
+export type OfferFormValues = z.infer<typeof offerFormSchema>;
+
+/**
+ * Schema para edicion de oferta. Mismos campos, todos editables.
+ * Reutilizamos `offerFormSchema` directamente: el backend acepta el
+ * mismo shape y los campos `undefined` no se tocan (en update_offer).
+ */
+export const updateOfferFormSchema = offerFormSchema;
+export type UpdateOfferFormValues = OfferFormValues;
+
+// ============================================================
+// Venta (Sale)
+// ============================================================
+
+/**
+ * Schema para una linea de venta (parte de `create_sale`).
+ *
+ * En la UI del TPV el operador no introduce directamente el `unit_price`
+ * (lo calcula la app desde `attraction.base_ticket_price` o desde la
+ * oferta seleccionada). Este schema se usa internamente para validar
+ * el `CreateSaleLineInput` justo antes de invocar `create_sale`.
+ */
+export const createSaleLineSchema = z.object({
+  quantity: z.number().int().min(1).max(10000),
+  unit_price_cents: z.number().int().min(0),
+});
+
+export const createSaleSchema = z.object({
+  cash_session_id: z.string().uuid(),
+  /** `null` = venta sin oferta. */
+  offer_id: z.string().uuid().nullable(),
+  lines: z.array(createSaleLineSchema).min(1, "Minimo una linea por venta."),
+});
+
+export type CreateSaleLine = z.infer<typeof createSaleLineSchema>;
+export type CreateSaleSchema = z.infer<typeof createSaleSchema>;
