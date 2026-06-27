@@ -64,6 +64,21 @@ async-trait = "0.1"
 # La dep se anade pero no se usa hasta la epica 5.
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
 
+# --- Modulo `ticket-delivery` (epica 3) ---
+# Crate `escpos` 0.19.x (ultima estable, Mayo 2026) para ESC/POS.
+# La feature `usbprint` activa `WindowsUsbPrintDriver` (usbprint.sys
+# + Win32 API), que es el driver nativo de Windows para impresoras
+# POS USB y evita Zadig/libusb. Solo compila en Windows; en otras
+# plataformas el modulo `delivery::thermal` queda como stub de
+# "plataforma no soportada" (ver SSOT §3: el MVP es Windows-first).
+escpos = { version = "0.19", default-features = false, features = ["std", "usbprint"] }
+
+# --- target-specific deps para cross-platform ---
+# Nada por ahora: el MVP es Windows-first. Si en el futuro se quiere
+# soporte Linux (udev) o macOS, las features `usb` o `native_usb` se
+# añaden aqui con su [target.'cfg(target_os = "linux")'.dependencies]
+# correspondiente.
+
 [features]
 # Esta feature se usa para tener codigo adicional durante el desarrollo.
 custom-protocol = ["tauri/custom-protocol"]
