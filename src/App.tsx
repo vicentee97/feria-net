@@ -7,9 +7,7 @@
  *  - Toaster (Sonner) para feedback de mutaciones.
  *  - TooltipProvider global (shadcn) para tooltips en toda la app.
  *
- * Estructura de rutas (TEAM-006; toda la superficie de la epica 1 esta
- * activa; `PendingBackendPage` se mantiene como utility pero no aparece
- * en el router):
+ * Estructura de rutas (TEAM-010; superficie completa de epica 1+2):
  *  /                                                Dashboard
  *  /ferias                                          FeriasListado
  *  /ferias/nueva                                    FeriaNueva
@@ -22,6 +20,10 @@
  *                                                   AtraccionNueva
  *  /ferias/:fairId/ediciones/:edicionId/atracciones/:atraccionId/editar
  *                                                   AtraccionEditar
+ *  /cajas                                           CajasListado
+ *  /cajas/nueva                                     AbrirCaja
+ *  /cajas/:id                                       CajaDetalle
+ *  /tpv?session=:id                                 TpvPage
  *  *                                                NotFound
  *
  * Layout principal (sidebar) envuelve todas las rutas validas.
@@ -49,6 +51,10 @@ import { EdicionDetallePage } from "@/pages/EdicionDetallePage";
 import { EdicionEditarPage } from "@/pages/EdicionEditarPage";
 import { AtraccionNuevaPage } from "@/pages/AtraccionNuevaPage";
 import { AtraccionEditarPage } from "@/pages/AtraccionEditarPage";
+import { CajasListadoPage } from "@/pages/CajasListadoPage";
+import { AbrirCajaPage } from "@/pages/AbrirCajaPage";
+import { CajaDetallePage } from "@/pages/CajaDetallePage";
+import { TpvPage } from "@/pages/TpvPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 
 const queryClient = new QueryClient({
@@ -111,6 +117,10 @@ const router = createBrowserRouter([
             path: "ferias/:fairId/ediciones/:edicionId/atracciones/:atraccionId/editar",
             element: <AtraccionEditarPage />,
           },
+          { path: "cajas", element: <CajasListadoPage /> },
+          { path: "cajas/nueva", element: <AbrirCajaPage /> },
+          { path: "cajas/:id", element: <CajaDetallePage /> },
+          { path: "tpv", element: <TpvPage /> },
         ],
       },
       { path: "*", element: <NotFoundPage /> },

@@ -70,3 +70,40 @@ export function todayLocalISO(): string {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
+
+/**
+ * Tiempo relativo corto en espanol: "hace 5s", "hace 2 min", "hace 3 h",
+ * o "recien" para menos de 5 segundos. Pensado para feedback de UI
+ * ("ultima venta hace 5s").
+ *
+ * @param iso  Timestamp ISO 8601 UTC del backend. `null`/`undefined`
+ *             o valor invalido devuelve `"-"`.
+ */
+export function formatRelativeTime(
+  iso: string | null | undefined,
+  now: Date = new Date(),
+): string {
+  if (!iso) return "-";
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) return "-";
+  const diffMs = now.getTime() - then.getTime();
+  if (diffMs < 0) return "recien";
+  const sec = Math.floor(diffMs / 1000);
+  if (sec < 5) return "recien";
+  if (sec < 60) return `hace ${sec}s`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `hace ${h} h`;
+  const days = Math.floor(h / 24);
+  return `hace ${days} d`;
+}
+
+/**
+ * Devuelve la marca de tiempo de hace N segundos (util para invalidar
+ * caches o construir URLs con timestamps). Pensado solo para tests y
+ * casos puntuales; el flujo normal usa `new Date()` directo.
+ */
+export function secondsAgoISO(seconds: number): string {
+  return new Date(Date.now() - seconds * 1000).toISOString();
+}
