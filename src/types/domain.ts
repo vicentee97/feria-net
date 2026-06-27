@@ -297,6 +297,79 @@ export interface UpdateOfferInput {
   bundle_price_cents?: number;
 }
 
+// ============================================================
+// ticket-delivery (epica 3 / TEAM-012)
+// ============================================================
+//
+// Espejo del modulo `src-tauri/src/domain/ticket_delivery_attempt.rs`
+// y de los outputs de `src-tauri/src/commands/delivery.rs`.
+// NO exponemos `TicketDeliveryAttempt` como entidad: el backend no
+// expone un command para listar el historial de intentos, y la UI
+// solo necesita `PrintTicketResult` + `RetryResult` para operar
+// (auto-print en TPV + reintento manual desde el detalle de caja).
+
+/**
+ * Tipo de delivery activo. Espejo literal de `DeliveryKind` en Rust
+ * (snake_case en BD; union literal en TS).
+ *
+ * - `thermal`: impresora termica ESC/POS (USB/Bluetooth).
+ * - `file`:    depuracion; escribe el payload a un archivo.
+ * - `noop`:    sin dispositivo fisico (modo demo / fallback por defecto).
+ * - `rfid`:    futuro; grabador de fichas (epica 8).
+ * - `unknown`: tipo no clasificado; emitido defensivamente por el
+ *              backend si el enum interno cambia.
+ */
+export type DeliveryKind = "thermal" | "file" | "noop" | "rfid" | "unknown";
+
+/** Resultado de un intento de entrega. Espejo de `DeliveryOutcome`. */
+export type DeliveryOutcome = "success" | "failure";
+
+/**
+ * Resultado de `print_ticket` (espejo de `PrintTicketResult` en
+ * `commands/delivery.rs`).
+ *
+ * El backend devuelve este objeto SIEMPRE, incluso cuando el
+ * backend fallo. La venta nunca falla por la impresion (regla dura
+ * de la epica 3; ver ARCHITECTURE.md §5.3 y TEAM-012).
+ */
+export interface PrintTicketResult {
+  ticket_id: string;
+  success: boolean;
+  /** `'success' | 'failure'`. String para no atar la UI al enum interno. */
+  outcome: DeliveryOutcome;
+  /** `null` cuando `success = true`. */
+  error_code: string | null;
+  /** Mensaje legible del backend si fallo; `null` en exito. */
+  error_detail: string | null;
+  /** Latencia observada del intento en milisegundos. */
+  latency_ms: number;
+  /** `kind` del backend que respondio (util para logs y UI). */
+  backend_kind: DeliveryKind;
+}
+
+/**
+ * Resumen de `retry_pending_tickets` (espejo de `RetryResult` en
+ * `commands/delivery.rs`). El backend procesa los tickets pendientes
+ * de una caja en orden y devuelve un `PrintTicketResult` por ticket
+ * dentro de `details`.
+ */
+export interface RetryResult {
+  attempted: number;
+  succeeded: number;
+  failed: number;
+  details: PrintTicketResult[];
+}
+
+/** Input para `print_ticket` (espejo de la firma Rust). */
+export interface PrintTicketInput {
+  ticket_id: string;
+}
+
+/** Input para `retry_pending_tickets` (espejo de la firma Rust). */
+export interface RetryPendingTicketsInput {
+  cash_session_id: string;
+}
+
 /** Input para una linea de `create_sale`. */
 export interface CreateSaleLineInput {
   /** Numero de tickets. >= 1. */
