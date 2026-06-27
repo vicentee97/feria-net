@@ -32,5 +32,6 @@ Indice vivo de equipos de trabajo del proyecto. Convencion vigente:
 | [TEAM-007](archive/TEAM-007-r1-enforce-backend.md) | R1 enforcement: indice UNIQUE parcial para "una sola edicion active por feria" | cerrado | 2026-06-26 | 2026-06-26 |
 | [TEAM-008](archive/TEAM-008-epica-1-cleanup-p3.md) | Cleanup P3 post-epica 1 (unificacion toast + 7 hallazgos) | cerrado | 2026-06-26 | 2026-06-26 |
 | [TEAM-009](archive/TEAM-009-epica-2-backend.md) | Epica 2 backend: caja diaria + TPV (ofertas, ventas, infraestructura tickets desacoplada) | cerrado | 2026-06-26 | 2026-06-26 |
+| [TEAM-010](archive/TEAM-010-epica-2-frontend.md) | Epica 2 frontend (TPV, cajas diarias, ofertas embebidas) | cerrado | 2026-06-27 | 2026-06-27 |
 
 Repositorio remoto: <https://github.com/vicentee97/feria-net>.
