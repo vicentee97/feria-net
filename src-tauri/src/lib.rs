@@ -12,6 +12,7 @@
 
 mod commands;
 pub mod db;
+pub mod delivery;
 pub mod domain;
 pub mod errors;
 mod state;
@@ -24,10 +25,11 @@ use tracing_subscriber::{fmt, EnvFilter};
 
 use crate::commands::{
     attractions as cmd_attractions, cash_sessions as cmd_cash_sessions,
-    editions as cmd_editions, fairs as cmd_fairs, offers as cmd_offers,
-    sales as cmd_sales,
+    delivery as cmd_delivery, editions as cmd_editions, fairs as cmd_fairs,
+    offers as cmd_offers, sales as cmd_sales,
 };
 use crate::db::DbPool;
+use crate::delivery::DeliveryRegistry;
 use crate::state::AppState;
 
 /// Resuelve la ruta del archivo SQLite local.
@@ -66,7 +68,15 @@ pub fn run() {
             })?;
 
             // 3. Registrar AppState.
-            app.manage(AppState { db: Arc::new(pool) });
+            //    El `DeliveryRegistry` se construye con auto-deteccion
+            //    por variables de entorno (`FERIANET_PRINTER`,
+            //    `FERIANET_TICKETS_DIR`); si ninguna esta, cae a
+            //    `NoOpDelivery`. Ver `delivery/registry.rs`.
+            let delivery = Arc::new(DeliveryRegistry::with_auto_detect());
+            app.manage(AppState {
+                db: Arc::new(pool),
+                delivery,
+            });
 
             Ok(())
         })
@@ -107,6 +117,14 @@ pub fn run() {
             cmd_sales::get_sale,
             cmd_sales::get_ticket,
             cmd_sales::list_pending_tickets_by_cash_session,
+            // `ticket-delivery` (epica 3 / TEAM-012). La venta
+            // NO llama a estos commands; se invocan desde la UI
+            // (auto-print tras venta, retry de pendientes,
+            // listado de dispositivos, health check).
+            cmd_delivery::print_ticket,
+            cmd_delivery::retry_pending_tickets,
+            cmd_delivery::list_delivery_devices,
+            cmd_delivery::delivery_health_check,
         ])
         .run(tauri::generate_context!())
         .expect("error al ejecutar la aplicacion Tauri");
