@@ -21,6 +21,17 @@ pub const V001__INIT_SQL: &str = include_str!("V001__init.sql");
 pub const V002__ONE_ACTIVE_EDITION_PER_FAIR_SQL: &str =
     include_str!("V002__one_active_edition_per_fair.sql");
 
+/// Esquema de TPV (V003, epica 2).
+///
+/// Anade las entidades de venta local: `cash_session`, `offer`,
+/// `sale`, `sale_line`, `ticket` y `ticket_delivery_attempt`.
+/// Mapea 1:1 con `docs/data-model.md` §2.4..§2.9, dejando la
+/// infraestructura desacoplada del `ticket-delivery` (epica 3):
+/// la venta registra tickets y un `ticket_delivery_attempt`
+/// placeholder; la epica 3 lo consulta y actualiza sin tocar
+/// el esquema de venta.
+pub const V003__EPICA2_TPV_SQL: &str = include_str!("V003__epica2_tpv.sql");
+
 /// Lista de migraciones que `rusqlite_migration` aplicara en orden.
 ///
 /// El orden importa: rusqlite_migration usa `PRAGMA user_version`
@@ -28,9 +39,11 @@ pub const V002__ONE_ACTIVE_EDITION_PER_FAIR_SQL: &str =
 /// no se aplican y la BD queda en el ultimo estado bueno.
 ///
 /// La libreria identifica la version por la posicion en el array
-/// (V001 -> user_version=1, V002 -> user_version=2). Solo `up` en v1:
-/// el rollback es futuro (post-MVP) y la SSOT no obliga a soportarlo.
+/// (V001 -> user_version=1, V002 -> user_version=2,
+///  V003 -> user_version=3). Solo `up` en v1: el rollback es
+/// futuro (post-MVP) y la SSOT no obliga a soportarlo.
 pub static MIGRATIONS: &[&str] = &[
     V001__INIT_SQL,
     V002__ONE_ACTIVE_EDITION_PER_FAIR_SQL,
+    V003__EPICA2_TPV_SQL,
 ];
