@@ -6,5 +6,8 @@
 //! vive en los repositorios.
 
 pub mod attractions;
+pub mod cash_sessions;
 pub mod editions;
 pub mod fairs;
+pub mod offers;
+pub mod sales;
