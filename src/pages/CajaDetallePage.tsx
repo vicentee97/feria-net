@@ -67,6 +67,7 @@ import { DetailSkeleton, ListSkeleton } from "@/components/app/LoadingState";
 import { EmptyState } from "@/components/app/EmptyState";
 import { ErrorState } from "@/components/app/ErrorState";
 import { ColorChip } from "@/components/app/ColorChip";
+import { PendingTicketsCard } from "@/components/app/PendingTicketsCard";
 
 import {
   useCashSessionById,
@@ -281,6 +282,10 @@ export function CajaDetallePage() {
             </dl>
           </CardContent>
         </Card>
+
+        {/* Tickets pendientes (epica 3). Solo se monta si hay
+            pendientes; desaparece sola tras reintento exitoso. */}
+        <PendingTicketsCard cashSessionId={session.id} />
 
         {/* Ventas */}
         <Card>
