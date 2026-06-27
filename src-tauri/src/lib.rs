@@ -89,9 +89,10 @@ pub fn run() {
             cmd_editions::update_fair_edition,
             cmd_editions::delete_fair_edition,
             cmd_editions::change_fair_edition_status,
-            // Caja diaria (TPV, epica 2 / TEAM-009)
+            // Caja diaria (TPV, epica 2 / TEAM-009, +get_cash_session en TEAM-011)
             cmd_cash_sessions::open_cash_session,
             cmd_cash_sessions::close_cash_session,
+            cmd_cash_sessions::get_cash_session,
             cmd_cash_sessions::get_open_cash_session,
             cmd_cash_sessions::list_cash_sessions_for_attraction,
             cmd_cash_sessions::get_cash_session_for_attraction_on_date,
