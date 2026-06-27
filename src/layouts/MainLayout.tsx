@@ -45,6 +45,12 @@ interface NavItem {
   disabled?: boolean;
   /** Tooltip cuando esta disabled. */
   comingSoonLabel?: string;
+  /**
+   * Patron(es) de URL adicionales donde el item debe aparecer como
+   * activo (NavLink solo marca activo el match exacto del `to`).
+   * Usado para `/cajas` que tambien debe cubrir `/tpv`.
+   */
+  activeOn?: string[];
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -55,10 +61,10 @@ const NAV_ITEMS: NavItem[] = [
     icon: CalendarRange,
   },
   {
+    to: "/cajas",
     label: "Cajas",
     icon: ReceiptText,
-    disabled: true,
-    comingSoonLabel: "Disponible en la epica 2.",
+    activeOn: ["/tpv"],
   },
   {
     label: "Informes",
@@ -165,7 +171,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <>
           <Separator className="bg-sidebar-border" />
           <div className="p-3 text-xs text-muted-foreground">
-            v1 (MVP) · Epica 1
+            v1 (MVP) · Epica 2
           </div>
         </>
       )}
@@ -180,6 +186,7 @@ function SidebarItem({
   item: NavItem;
   collapsed: boolean;
 }) {
+  const location = useLocation();
   const iconEl = (
     <item.icon className="size-4 shrink-0" aria-hidden="true" />
   );
@@ -216,14 +223,21 @@ function SidebarItem({
     );
   }
 
+  // `NavLink` solo marca activo el match exacto del `to`. Si el item
+  // declara `activeOn` (p.ej. `/cajas` cubre `/tpv`), lo combinamos
+  // con un check explicito contra `location.pathname`.
+  const isActive = (active: boolean) =>
+    active ||
+    (item.activeOn?.some((p) => location.pathname.startsWith(p)) ?? false);
+
   return (
     <NavLink
       to={item.to ?? "#"}
       end={item.to === "/"}
-      className={({ isActive }) =>
+      className={({ isActive: navActive }) =>
         cn(
           "outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md",
-          isActive &&
+          isActive(navActive) &&
             "bg-sidebar-accent text-sidebar-accent-foreground",
         )
       }
@@ -234,5 +248,5 @@ function SidebarItem({
 }
 
 // Evita warning de unused imports en builds viejos de TS.
-const _unused = { ChevronsLeft, ChevronsRight, useLocation };
+const _unused = { ChevronsLeft, ChevronsRight };
 void _unused;
