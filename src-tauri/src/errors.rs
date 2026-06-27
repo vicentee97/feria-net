@@ -28,6 +28,24 @@ pub enum AppError {
     #[error("restriccion de integridad: {0}")]
     ConstraintViolation(String),
 
+    /// Ya existe una caja abierta para esta atraccion. Una sola
+    /// caja abierta por atraccion simultaneamente (data-model §5.2).
+    /// Se traduce del indice UNIQUE parcial V003 sobre `cash_session
+    /// WHERE closed_at IS NULL`.
+    #[error("ya hay una caja abierta para esta atracción: {0}")]
+    CashSessionAlreadyOpen(String),
+
+    /// Operacion rechazada: la caja ya esta cerrada.
+    /// (data-model §5.3: una caja cerrada no acepta nuevas ventas.)
+    #[error("la caja ya está cerrada: {0}")]
+    CashSessionClosed(String),
+
+    /// Venta invalida: totales incoherentes, oferta sin linea
+    /// valida, etc. Validacion en capa de aplicacion al crear
+    /// o modificar una `Sale`.
+    #[error("venta inválida: {0}")]
+    InvalidSale(String),
+
     /// Error de SQLite (propagado de rusqlite).
     #[error("error de base de datos: {0}")]
     Database(#[from] rusqlite::Error),
@@ -45,6 +63,9 @@ impl AppError {
             AppError::InvalidInput(_) => "invalid_input",
             AppError::UniqueViolation(_) => "unique_violation",
             AppError::ConstraintViolation(_) => "constraint_violation",
+            AppError::CashSessionAlreadyOpen(_) => "cash_session_already_open",
+            AppError::CashSessionClosed(_) => "cash_session_closed",
+            AppError::InvalidSale(_) => "invalid_sale",
             AppError::Database(_) => "database",
             AppError::Internal(_) => "internal",
         };
