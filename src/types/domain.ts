@@ -7,14 +7,18 @@
  *
  * Convenciones:
  *  - `id`: UUID v4 en formato string canonico (sin comillas, lowercase).
- *  - `created_at`: timestamp ISO 8601 UTC con offset `Z`.
- *  - Fechas locales (`start_date`, `end_date`): YYYY-MM-DD.
+ *  - `created_at` / `opened_at` / `closed_at` / `issued_at`: timestamp
+ *    ISO 8601 UTC con offset `Z`.
+ *  - Fechas locales (`start_date`, `end_date`, `date`): YYYY-MM-DD.
  *  - `color`: hex `#RRGGBB` (6 digitos, sin alpha).
- *  - `base_ticket_price`: INTEGER en centimos. Convertir a EUR en UI.
+ *  - Importes monetarios: **centimos** (entero). Convertir a EUR en UI
+ *    con `src/lib/money.ts`. El sufijo `_cents` del backend se mantiene
+ *    en TS para reflejar literalmente las claves del JSON. Excepcion
+ *    historica: `Ticket.total_cents` (sin sufijo, data-model §2.8).
  */
 
 // ============================================================
-// Entidades
+// Entidades — Feria / Edicion / Atraccion (epica 1)
 // ============================================================
 
 export interface Fair {
@@ -53,6 +57,141 @@ export interface Attraction {
   /** Precio base del ticket en CENTIMOS (entero). */
   base_ticket_price: number;
   is_active: boolean;
+}
+
+// ============================================================
+// Entidades — Caja / Oferta / Venta (epica 2)
+// ============================================================
+
+/**
+ * Caja diaria de una atraccion. Unidad operativa del TPV: las
+ * ventas cuelgan de aqui. Ver `docs/data-model.md` §2.5.
+ *
+ * Reglas (enforced en backend):
+ * - Una sola caja ABIERTA por atraccion simultaneamente.
+ * - Una sola caja por atraccion y dia (cerrada o no).
+ * - `closed_at IS NULL` => caja abierta.
+ */
+export interface CashSession {
+  id: string;
+  attraction_id: string;
+  /** Fecha local del operador (YYYY-MM-DD). */
+  date: string;
+  /** Momento exacto de apertura (UTC ISO 8601). */
+  opened_at: string;
+  /** Momento exacto de cierre (UTC ISO 8601). `null` mientras abierta. */
+  closed_at: string | null;
+  /** Fondo inicial en CENTIMOS. */
+  opening_amount_cents: number;
+  /** Importe declarado al cierre en CENTIMOS. `null` mientras abierta. */
+  closing_amount_cents: number | null;
+  /**
+   * Suma de ventas registradas, congelada al cerrar. `null` mientras
+   * la caja sigue abierta.
+   */
+  total_amount_cents: number | null;
+}
+
+/**
+ * Oferta / bundle. `N` tickets por un precio fijo. Vive dentro de
+ * una edicion de feria. Ver `docs/data-model.md` §2.4.
+ *
+ * Una venta puede aplicar como mucho una oferta (data-model §5.4).
+ */
+export interface Offer {
+  id: string;
+  fair_edition_id: string;
+  name: string;
+  /** Numero de tickets del bundle. >= 1. */
+  bundle_quantity: number;
+  /** Precio total del bundle en CENTIMOS. >= 0. */
+  bundle_price_cents: number;
+  /** Soft-delete. `false` = borrado logico (no aparece en TPV). */
+  is_active: boolean;
+}
+
+/**
+ * Venta dentro de una caja. Contiene 1 o N `SaleLine`. Si tiene
+ * `offer_id`, el total es el del bundle, no la suma de lineas.
+ * Ver `docs/data-model.md` §2.6.
+ *
+ * Modelo bundle (decidido en backend V003):
+ * - Sin oferta: `total_amount_cents = sum(line_total_cents)`.
+ * - Con oferta: 1 sola `SaleLine` con `quantity = bundle_quantity`,
+ *   `unit_price_cents = 0`, `line_total_cents = 0`; el cobro vive en
+ *   `total_amount_cents = offer.bundle_price_cents`.
+ */
+export interface Sale {
+  id: string;
+  cash_session_id: string;
+  /** `null` = venta sin oferta. */
+  offer_id: string | null;
+  /** Momento exacto de la venta (UTC ISO 8601). */
+  created_at: string;
+  /** Total cobrado en CENTIMOS. Inmutable tras crear la venta. */
+  total_amount_cents: number;
+}
+
+/**
+ * Linea de venta. Cantidad de tickets a un precio unitario.
+ * Ver `docs/data-model.md` §2.7.
+ *
+ * Modelo bundle: con oferta aplicada, `unit_price_cents = 0` y
+ * `line_total_cents = 0` (el cobro es el bundle en `Sale.total_amount_cents`).
+ */
+export interface SaleLine {
+  id: string;
+  sale_id: string;
+  /** Numero de tickets. >= 1. */
+  quantity: number;
+  /** Precio por ticket en CENTIMOS. >= 0. */
+  unit_price_cents: number;
+  /** `quantity * unit_price_cents` (puede ser 0 con oferta). */
+  line_total_cents: number;
+}
+
+/**
+ * Ticket fisico emitido. UNA fila = UN ticket fisico. Una `SaleLine`
+ * con `quantity = N` genera N filas en `ticket` (cada una con
+ * `quantity = 1`).
+ *
+ * Ver `docs/data-model.md` §2.8. La epica 3 anadira `delivery_status`,
+ * `delivery_attempts` y `last_delivery_error` via `ALTER TABLE ADD COLUMN`
+ * (sin migracion destructiva).
+ *
+ * Decisiones tomadas en V003 (epica 2):
+ * - Se denormalizan `sale_id`, `sale_line_id`, `cash_session_id`,
+ *   `fair_edition_id` y `attraction_id` para que informes y sync lean
+ *   sin joins profundos (data-model §2.8, §3).
+ * - `total_cents` SIN sufijo `_cents` (mantenido por data-model canónico).
+ */
+export interface Ticket {
+  id: string;
+  sale_id: string;
+  sale_line_id: string;
+  /** Denormalizado: caja de origen (data-model §2.8). */
+  cash_session_id: string;
+  /** Denormalizado: edicion de la feria (data-model §2.8). */
+  fair_edition_id: string;
+  /** Denormalizado: atraccion (data-model §2.8). */
+  attraction_id: string;
+  created_at: string;
+  /** Tickets representados por esta fila. Por defecto 1. */
+  quantity: number;
+  unit_price_cents: number;
+  /** Importe del ticket en CENTIMOS. `unit_price_cents * quantity`. */
+  total_cents: number;
+}
+
+/**
+ * Venta completa con lineas y tickets populados. Devuelto por
+ * `create_sale` y `get_sale`. La UI lo usa para mostrar el ticket /
+ * comprobante de la venta.
+ */
+export interface SaleWithLines {
+  sale: Sale;
+  lines: SaleLine[];
+  tickets: Ticket[];
 }
 
 // ============================================================
@@ -123,6 +262,66 @@ export interface UpdateFairEditionInput {
   status?: FairEditionStatus;
 }
 
+/** Input para `open_cash_session`. */
+export interface CreateCashSessionInput {
+  attraction_id: string;
+  /** ISO 8601 `YYYY-MM-DD` (fecha local del operador). */
+  date: string;
+  /** Fondo inicial en CENTIMOS. */
+  opening_amount_cents: number;
+}
+
+/** Input para `close_cash_session`. */
+export interface CloseCashSessionInput {
+  /** Importe declarado por el operador al cierre en CENTIMOS. */
+  closing_amount_cents: number;
+}
+
+/** Input para `create_offer`. */
+export interface CreateOfferInput {
+  fair_edition_id: string;
+  name: string;
+  /** Numero de tickets del bundle. >= 1. */
+  bundle_quantity: number;
+  /** Precio total del bundle en CENTIMOS. >= 0. */
+  bundle_price_cents: number;
+}
+
+/**
+ * Input para `update_offer`. Campos `undefined` no se tocan.
+ * Refleja `Partial<CreateOfferInput>`.
+ */
+export interface UpdateOfferInput {
+  name?: string;
+  bundle_quantity?: number;
+  bundle_price_cents?: number;
+}
+
+/** Input para una linea de `create_sale`. */
+export interface CreateSaleLineInput {
+  /** Numero de tickets. >= 1. */
+  quantity: number;
+  /** Precio unitario en CENTIMOS. >= 0. */
+  unit_price_cents: number;
+}
+
+/**
+ * Input para `create_sale`.
+ *
+ * Reglas (enforced en backend):
+ * - `lines.length >= 1`.
+ * - Sin oferta: `total = sum(line_total)`, cada linea con
+ *   `unit_price_cents` real.
+ * - Con oferta: exactamente 1 linea con `quantity = offer.bundle_quantity`
+ *   y `unit_price_cents = 0`; el cobro es `offer.bundle_price_cents`.
+ */
+export interface CreateSaleInput {
+  cash_session_id: string;
+  /** `null` = venta sin oferta. */
+  offer_id: string | null;
+  lines: CreateSaleLineInput[];
+}
+
 // ============================================================
 // Errores (espejo de src-tauri/src/errors.rs SerializableError)
 // ============================================================
@@ -130,6 +329,9 @@ export interface UpdateFairEditionInput {
 /**
  * Codigos de error serializados por el backend. **snake_case**, no
  * PascalCase. Coinciden con el `match kind` de `errors.rs`.
+ *
+ * Los 3 ultimos (`cash_session_already_open`, `cash_session_closed`,
+ * `invalid_sale`) son nuevos en epica 2 (V003).
  */
 export type SerializableErrorKind =
   | "not_found"
@@ -137,7 +339,10 @@ export type SerializableErrorKind =
   | "unique_violation"
   | "constraint_violation"
   | "database"
-  | "internal";
+  | "internal"
+  | "cash_session_already_open"
+  | "cash_session_closed"
+  | "invalid_sale";
 
 export interface SerializableError {
   kind: SerializableErrorKind;
