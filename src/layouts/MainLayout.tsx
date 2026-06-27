@@ -37,6 +37,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Breadcrumbs } from "@/components/app/Breadcrumbs";
+import { PrinterHealthBadge } from "@/components/app/PrinterHealthBadge";
+import {
+  deriveDeliveryHealthStatus,
+  useDeliveryDevices,
+  useDeliveryHealthCheck,
+} from "@/hooks/queries/delivery";
 
 interface NavItem {
   to?: string;
@@ -95,13 +101,30 @@ export function MainLayout() {
     () => typeof window !== "undefined" && window.innerWidth < 1024,
   );
 
+  // Estado del backend de impresion (epica 3). Es informativo: NO
+  // bloquea la UI ni muestra modales. Solo renderiza un chip
+  // discreto en la cabecera a la derecha de los breadcrumbs.
+  const health = useDeliveryHealthCheck();
+  const devices = useDeliveryDevices();
+  const printerStatus = deriveDeliveryHealthStatus({
+    healthIsPending: health.isPending,
+    healthIsError: health.isError,
+    devices: devices.data,
+  });
+
   return (
     <TooltipProvider delayDuration={150}>
       <div className="flex min-h-[100dvh] bg-muted/30">
         <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
         <main className="flex min-w-0 flex-1 flex-col">
           <header className="flex h-14 items-center gap-2 border-b bg-background px-4 sm:px-6">
-            <Breadcrumbs />
+            <div className="min-w-0 flex-1">
+              <Breadcrumbs />
+            </div>
+            <PrinterHealthBadge
+              status={printerStatus}
+              devices={devices.data}
+            />
           </header>
           <div className="flex-1 overflow-y-auto p-4 sm:p-6">
             <Outlet />
