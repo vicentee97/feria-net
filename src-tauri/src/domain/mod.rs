@@ -22,8 +22,10 @@ pub use offer::Offer;
 pub use sale::Sale;
 pub use sale_line::SaleLine;
 pub use ticket::Ticket;
-// Los enums y struct de `ticket_delivery_attempt` se mantienen en
-// el modulo pero no se re-exportan todavia: la epica 3 los
-// necesitara cuando implemente el modulo de impresion. Por ahora
-// la epica 2 solo escribe placeholders via SQL crudo desde el
-// repositorio `sales.rs`.
+// Enums y struct de `ticket_delivery_attempt` re-exportados
+// desde la epica 3 (TEAM-012): el modulo `ticket-delivery` los
+// consume directamente, y el repositorio
+// `repository::delivery_attempts` los usa para mapear filas.
+pub use ticket_delivery_attempt::{
+    DeliveryErrorCode, DeliveryKind, DeliveryOutcome, TicketDeliveryAttempt,
+};

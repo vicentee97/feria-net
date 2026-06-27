@@ -7,6 +7,7 @@
 
 pub mod attractions;
 pub mod cash_sessions;
+pub mod delivery_attempts;
 pub mod editions;
 pub mod fairs;
 pub mod offers;
