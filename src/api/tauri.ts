@@ -34,6 +34,8 @@ import type {
   FairEdition,
   FairEditionStatus,
   Offer,
+  PrintTicketResult,
+  RetryResult,
   Sale,
   SaleWithLines,
   Ticket,
@@ -461,6 +463,91 @@ export async function updateOffer(
 export async function softDeleteOffer(id: string): Promise<void> {
   try {
     await invoke<void>("soft_delete_offer", { id });
+  } catch (e) {
+    throw toAppError(e);
+  }
+}
+
+// ============================================================
+// ticket-delivery (epica 3 / TEAM-012)
+// ============================================================
+//
+// Capa delgada sobre los 4 commands Tauri del modulo
+// `ticket-delivery`. Los nombres de comandos coinciden con
+// `src-tauri/src/commands/delivery.rs`. Ninguno debe lanzar
+// excepcion que aborte la venta: `print_ticket` siempre devuelve
+// un `PrintTicketResult` con `success=false` si el backend falla
+// (regla dura de la epica 3). Las excepciones aqui solo se
+// producen si el command en si no se puede invocar (capa IPC),
+// por ejemplo si la app se cierra a mitad de un print.
+//
+// `retry_pending_tickets`, `list_delivery_devices` y
+// `delivery_health_check` SI pueden lanzar `AppError` desde el
+// backend (e.g. backend caido, path invalido). Esos los traduce
+// `toAppError` y se manejan via `onError` del hook.
+
+/**
+ * Intenta imprimir un ticket con el backend activo. **Nunca falla
+ * la venta**: si el backend falla, devuelve un `PrintTicketResult`
+ * con `success=false` y el `error_code`/`error_detail` poblados.
+ *
+ * @param ticketId UUID del ticket (SaleWithLines.tickets[].id).
+ */
+export async function printTicket(ticketId: string): Promise<PrintTicketResult> {
+  try {
+    return await invoke<PrintTicketResult>("print_ticket", {
+      ticketId,
+    });
+  } catch (e) {
+    throw toAppError(e);
+  }
+}
+
+/**
+ * Reintenta la entrega de TODOS los tickets pendientes de una caja.
+ * El backend procesa los tickets en orden (secuencial para no
+ * saturar el USB) y devuelve el resumen.
+ *
+ * @param cashSessionId UUID de la caja.
+ */
+export async function retryPendingTickets(
+  cashSessionId: string,
+): Promise<RetryResult> {
+  try {
+    return await invoke<RetryResult>("retry_pending_tickets", {
+      cashSessionId,
+    });
+  } catch (e) {
+    throw toAppError(e);
+  }
+}
+
+/**
+ * Lista los dispositivos del backend activo.
+ * - NoOp: `["NoOp (sin dispositivo fisico)"]`.
+ * - File: `["Archivo: <path>"]`.
+ * - Thermal: `["<usb_device_path>", ...]` (listado de impresoras
+ *   detectadas por `WindowsUsbPrintDriver.list()`).
+ *
+ * Devuelve un `string[]` estable (lo que serializa el backend).
+ */
+export async function listDeliveryDevices(): Promise<string[]> {
+  try {
+    return await invoke<string[]>("list_delivery_devices");
+  } catch (e) {
+    throw toAppError(e);
+  }
+}
+
+/**
+ * Health check del backend activo. Devuelve `void` si esta OK.
+ * Si el backend no responde o falla, lanza `AppError` (translated
+ * via `toAppError`). Lo consume `useDeliveryHealthCheck` y el
+ * indicador de la cabecera.
+ */
+export async function deliveryHealthCheck(): Promise<void> {
+  try {
+    await invoke<void>("delivery_health_check");
   } catch (e) {
     throw toAppError(e);
   }
