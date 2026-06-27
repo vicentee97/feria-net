@@ -3,7 +3,8 @@
 - ID: TEAM-013
 - Nombre: Épica 3 frontend — UI de impresión (auto-print best-effort, tickets pendientes con retry, indicador de salud del backend)
 - Fecha creacion: 2026-06-27
-- Estado: activo
+- Fecha cierre: 2026-06-27
+- Estado: cerrado
 
 ## Descripcion
 

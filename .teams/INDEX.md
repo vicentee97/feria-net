@@ -28,12 +28,13 @@ Indice vivo de equipos de trabajo del proyecto. Convencion vigente:
 | [TEAM-003](archive/TEAM-003-epica-1-backend.md) | Epica 1 backend + base frontend | cerrado | 2026-06-26 | 2026-06-26 |
 | [TEAM-004](archive/TEAM-004-epica-1-frontend.md) | Epica 1 frontend (UI ferias + atracciones) | cerrado | 2026-06-26 | 2026-06-26 |
 | [TEAM-005](archive/TEAM-005-epica-1-editions-backend.md) | Epica 1 backend de ediciones (FairEdition) | cerrado | 2026-06-26 | 2026-06-26 |
-| [TEAM-006](archive/TEAM-006-epica-1-frontend.md) | Epica 1 frontend de ediciones (FairEdition UI) | cerrado | 2026-06-26 | 2026-06-26 |
+| [TEAM-006](archive/TEAM-006-epica-1-editions-frontend.md) | Epica 1 frontend de ediciones (FairEdition UI) | cerrado | 2026-06-26 | 2026-06-26 |
 | [TEAM-007](archive/TEAM-007-r1-enforce-backend.md) | R1 enforcement: indice UNIQUE parcial para "una sola edicion active por feria" | cerrado | 2026-06-26 | 2026-06-26 |
 | [TEAM-008](archive/TEAM-008-epica-1-cleanup-p3.md) | Cleanup P3 post-epica 1 (unificacion toast + 7 hallazgos) | cerrado | 2026-06-26 | 2026-06-26 |
 | [TEAM-009](archive/TEAM-009-epica-2-backend.md) | Epica 2 backend: caja diaria + TPV (ofertas, ventas, infraestructura tickets desacoplada) | cerrado | 2026-06-26 | 2026-06-26 |
 | [TEAM-010](archive/TEAM-010-epica-2-frontend.md) | Epica 2 frontend (TPV, cajas diarias, ofertas embebidas) | cerrado | 2026-06-27 | 2026-06-27 |
 | [TEAM-011](archive/TEAM-011-p2-get-cash-session.md) | P2 get_cash_session — command Tauri para resolver el fan-out 4 niveles del frontend | cerrado | 2026-06-27 | 2026-06-27 |
 | [TEAM-012](archive/TEAM-012-epica-3-delivery-backend.md) | Epica 3 backend: `ticket-delivery` intercambiable (trait + 3 impls + commands + tests de sustitucion) | cerrado | 2026-06-27 | 2026-06-27 |
+| [TEAM-013](archive/TEAM-013-epica-3-delivery-frontend.md) | Epica 3 frontend: UI de impresion (auto-print best-effort, tickets pendientes con retry, indicador de salud del backend) | cerrado | 2026-06-27 | 2026-06-27 |
 
 Repositorio remoto: <https://github.com/vicentee97/feria-net>.
