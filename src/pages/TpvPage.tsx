@@ -80,6 +80,7 @@ import {
 } from "@/hooks/queries/cash_sessions";
 import { useOffersByEdition } from "@/hooks/queries/offers";
 import { useCreateSale, useSalesByCashSession } from "@/hooks/queries/sales";
+import { usePrintTickets } from "@/hooks/queries/delivery";
 import {
   closeCashSessionFormSchema,
   type CloseCashSessionFormValues,
@@ -90,6 +91,7 @@ import type { z } from "zod";
 import { eurToCents, formatEur } from "@/lib/money";
 import { formatRelativeTime } from "@/lib/datetime";
 import type { Offer, SaleWithLines } from "@/types/domain";
+import { PrintIndicator, type PrintIndicatorState } from "@/components/app/PrintIndicator";
 
 /** Cantidad maxima que el operador puede seleccionar en una venta. */
 const MAX_QTY = 10000;
@@ -112,6 +114,15 @@ export function TpvPage() {
   const salesQuery = useSalesByCashSession(ctx.session?.id);
   const createSale = useCreateSale(ctx.session?.id ?? "");
   const closeCashSession = useCloseCashSession();
+
+  // Hooks de impresion (epica 3). Best-effort: la venta se registra
+  // primero; el print es fire-and-forget desde el punto de vista del
+  // backend (el command `print_ticket` nunca falla la venta).
+  const printTickets = usePrintTickets();
+  // Estado local del indicador de impresion (idle/printing/partial/failed).
+  // No afecta al flujo de venta: solo a la UI del header.
+  const [printingState, setPrintingState] = useState<PrintIndicatorState>("idle");
+  const [printingInFlight, setPrintingInFlight] = useState<number>(0);
 
   // Ofertas activas de la edicion (no soft-deleted).
   const offersQuery = useOffersByEdition(ctx.edition?.id);
@@ -145,6 +156,10 @@ export function TpvPage() {
   useEffect(() => {
     setSelectedOfferId(null);
     setQuantity(1);
+    // Reset del indicador de impresion al cambiar de caja: cada
+    // caja tiene su propio contexto de tickets pendientes.
+    setPrintingState("idle");
+    setPrintingInFlight(0);
     if (typeof window !== "undefined" && !sessionId) return;
     try {
       const raw = window.localStorage.getItem(LAST_SALE_KEY_PREFIX + sessionId!);
@@ -285,7 +300,7 @@ export function TpvPage() {
     setQuantity(1);
     setSelectedOfferId(null);
 
-    // Toast verde contextual.
+    // Toast verde contextual (la venta YA esta confirmada).
     const tickets = sale.tickets.length;
     toast.success(
       `Venta registrada: ${tickets} ${tickets === 1 ? "ticket" : "tickets"} = ${formatEur(sale.sale.total_amount_cents)}`,
@@ -305,6 +320,55 @@ export function TpvPage() {
       }
     }
     void now; // referenciado para que lint no se queje del setInterval
+
+    // ----- Auto-print best-effort (epica 3) -----
+    //
+    // La venta ya esta registrada; la impresion NO debe bloquear
+    // ni fallar la venta. Si `print_ticket` falla para uno o
+    // varios tickets, los tickets quedan en `ticket_delivery_attempt`
+    // con `outcome='failure'` y apareceran en el detalle de caja
+    // como pendientes. El operador podra reintentarlos a mano.
+    //
+    // Mostramos un indicador discreto en la cabecera mientras
+    // dura; el indicador vuelve a `idle` cuando termina (con o sin
+    // exito). Si algun ticket fallo, pasa a `partial` y se queda
+    // visible hasta que el usuario navega o vende otra cosa.
+    const ticketIds = sale.tickets.map((t) => t.id);
+    if (ticketIds.length === 0) return;
+
+    setPrintingState("printing");
+    setPrintingInFlight(ticketIds.length);
+    try {
+      const rows = await printTickets.mutateAsync(ticketIds);
+      const failedRows = rows.filter(
+        (r) => r.result === null || !r.result.success,
+      );
+      const failedCount = failedRows.length;
+      if (failedCount === 0) {
+        setPrintingState("idle");
+        setPrintingInFlight(0);
+      } else {
+        setPrintingState("partial");
+        // Warning contextual. No usamos `toast.error` porque el
+        // partial NO es un error critico: la venta esta registrada,
+        // el operador puede reintentar desde el detalle de caja.
+        toast.warning(
+          `${ticketIds.length - failedCount}/${ticketIds.length} tickets impresos. ${failedCount} pendiente${failedCount === 1 ? "" : "s"} (ver detalle de caja).`,
+          {
+            duration: 8000,
+          },
+        );
+      }
+    } catch {
+      // El batch solo entra aqui si TODOS los tickets fallan en
+      // la capa IPC (muy raro; `Promise.allSettled` ya absorbe
+      // fallos individuales). Aun asi, la venta esta registrada.
+      setPrintingState("failed");
+      toast.error(
+        "No se pudo iniciar la impresion. Los tickets quedaran como pendientes; reintentalos desde el detalle de caja.",
+        { duration: 10000 },
+      );
+    }
   }
 
   async function handleCloseBox(values: CloseCashSessionFormValues) {
@@ -347,9 +411,18 @@ export function TpvPage() {
             </span>
           }
           subtitle={
-            <span className="text-sm text-muted-foreground">
-              {fair.name} {edition.year} · caja abierta{" "}
-              {formatRelativeTime(session.opened_at, now)}
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+              <span>
+                {fair.name} {edition.year} · caja abierta{" "}
+                {formatRelativeTime(session.opened_at, now)}
+              </span>
+              {/* Indicador discreto de impresion (epica 3). Solo
+                  aparece durante un print en curso o cuando hay
+                  tickets pendientes de la ultima venta. */}
+              <PrintIndicator
+                state={printingState}
+                inFlight={printingInFlight}
+              />
             </span>
           }
           actions={
