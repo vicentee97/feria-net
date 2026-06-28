@@ -370,6 +370,40 @@ export interface RetryPendingTicketsInput {
   cash_session_id: string;
 }
 
+/**
+ * Estado completo del backend de impresion para la UI.
+ * Espejo literal de `DeliveryStatus` en
+ * `src-tauri/src/commands/delivery.rs` (`serde(rename_all = "camelCase")`).
+ *
+ * Consumido por `PrinterHealthBadge` (cabecera global) para pintar
+ * un warning explicito cuando el backend ha hecho fallback silencioso
+ * (cierra H1 junto con el fix backend de TEAM-014).
+ *
+ * Campos:
+ * - `kind`: backend activo actualmente (responderia a un `deliver()`).
+ * - `attempted_kind`: backend que se intento usar originalmente antes
+ *   del fallback. `null` si no hubo fallback (NoOp por defecto sin
+ *   intento previo, o backend configurado correctamente).
+ * - `healthy`: `health_check()` del backend activo. Si hay
+ *   `init_error`, sera `false` aunque el backend activo (NoOp)
+ *   reporte OK por contrato.
+ * - `devices`: dispositivos detectados por el backend activo
+ *   (USB paths, ruta del directorio File, etc). Puede ser vacio.
+ * - `init_error`: mensaje legible del error en el arranque si lo hubo.
+ *   La UI lo muestra verbatim en el tooltip cuando aplica.
+ * - `backend_label`: etiqueta legible ya formateada por el backend
+ *   (p.ej. "Thermal (configurado)", "NoOp (fallback desde File: ...)").
+ *   La UI la usa para no duplicar logica de formato.
+ */
+export interface DeliveryStatus {
+  kind: DeliveryKind;
+  attempted_kind: DeliveryKind | null;
+  healthy: boolean;
+  devices: string[];
+  init_error: string | null;
+  backend_label: string;
+}
+
 /** Input para una linea de `create_sale`. */
 export interface CreateSaleLineInput {
   /** Numero de tickets. >= 1. */
