@@ -30,10 +30,15 @@ import type {
   CreateFairInput,
   CreateOfferInput,
   CreateSaleInput,
+  DailyReport,
   DeliveryStatus,
   Fair,
   FairEdition,
   FairEditionStatus,
+  FeriaReport,
+  ComparativeReport,
+  GetDailyReportInput,
+  GetFeriaReportInput,
   Offer,
   PrintTicketResult,
   RetryResult,
@@ -549,6 +554,75 @@ export async function listDeliveryDevices(): Promise<string[]> {
 export async function deliveryHealthCheck(): Promise<void> {
   try {
     await invoke<void>("delivery_health_check");
+  } catch (e) {
+    throw toAppError(e);
+  }
+}
+
+// ============================================================
+// Informes v1 (epica 4 / TEAM-017)
+// ============================================================
+//
+// Capa delgada sobre los 3 commands Tauri de informes.
+// Contratos:
+//  - `get_daily_report(edition_id, date)`      -> `DailyReport`.
+//  - `get_feria_report(edition_id, from, to)`  -> `FeriaReport`.
+//  - `get_comparative_report(fair_id)`         -> `ComparativeReport`.
+//
+// Las fechas se reciben como string `YYYY-MM-DD`. El backend las
+// parsea y devuelve `AppError("invalid_input", ...)` si el formato
+// es invalido (regla de `commands/reports.rs`). El rango del informe
+// por feria exige `from_date <= to_date` en backend.
+
+/**
+ * Informe por dia: totales por atraccion + total general del dia.
+ *
+ * @param input `{ edition_id, date }` con `date` en formato ISO 8601
+ *              `YYYY-MM-DD` (fecha local del operador).
+ */
+export async function getDailyReport(
+  input: GetDailyReportInput,
+): Promise<DailyReport> {
+  try {
+    return await invoke<DailyReport>("get_daily_report", {
+      editionId: input.edition_id,
+      date: input.date,
+    });
+  } catch (e) {
+    throw toAppError(e);
+  }
+}
+
+/**
+ * Informe por feria: totales agregados de una edicion sobre un rango
+ * de fechas (inclusivo). El backend rechaza `from_date > to_date`.
+ */
+export async function getFeriaReport(
+  input: GetFeriaReportInput,
+): Promise<FeriaReport> {
+  try {
+    return await invoke<FeriaReport>("get_feria_report", {
+      editionId: input.edition_id,
+      fromDate: input.from_date,
+      toDate: input.to_date,
+    });
+  } catch (e) {
+    throw toAppError(e);
+  }
+}
+
+/**
+ * Comparativa interanual: todas las ediciones de una misma feria,
+ * ordenadas por `year` ascendente (regla del backend). Sin filtro
+ * de fechas: una edicion sin ventas aparece con totales a 0.
+ */
+export async function getComparativeReport(
+  fairId: string,
+): Promise<ComparativeReport> {
+  try {
+    return await invoke<ComparativeReport>("get_comparative_report", {
+      fairId,
+    });
   } catch (e) {
     throw toAppError(e);
   }
