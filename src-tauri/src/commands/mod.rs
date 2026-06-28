@@ -11,4 +11,5 @@ pub mod delivery;
 pub mod editions;
 pub mod fairs;
 pub mod offers;
+pub mod reports;
 pub mod sales;
