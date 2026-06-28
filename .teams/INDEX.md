@@ -37,5 +37,6 @@ Indice vivo de equipos de trabajo del proyecto. Convencion vigente:
 | [TEAM-012](archive/TEAM-012-epica-3-delivery-backend.md) | Epica 3 backend: `ticket-delivery` intercambiable (trait + 3 impls + commands + tests de sustitucion) | cerrado | 2026-06-27 | 2026-06-27 |
 | [TEAM-013](archive/TEAM-013-epica-3-delivery-frontend.md) | Epica 3 frontend: UI de impresion (auto-print best-effort, tickets pendientes con retry, indicador de salud del backend) | cerrado | 2026-06-27 | 2026-06-27 |
 | [TEAM-014](archive/TEAM-014-fix-h1-and-cleanups.md) | Fix H1 (registry expone init_error) + execute_print helper + timeout 5s en ThermalPrinter | cerrado | 2026-06-28 | 2026-06-28 |
+| [TEAM-015](archive/TEAM-015-delivery-warning-ui.md) | UI warning fallback delivery (cierra H1 frontend) | cerrado | 2026-06-28 | 2026-06-28 |
 
 Repositorio remoto: <https://github.com/vicentee97/feria-net>.
