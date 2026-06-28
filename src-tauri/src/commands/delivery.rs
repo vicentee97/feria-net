@@ -76,6 +76,40 @@ pub struct RetryResult {
     pub details: Vec<PrintTicketResult>,
 }
 
+/// Estado del backend de impresion para la UI (cierra H1).
+///
+/// El frontend usa este command en el indicador de salud de la
+/// cabecera global (`PrinterHealthBadge`) para mostrar un warning
+/// explicito cuando hubo un fallback silencioso en el arranque
+/// (p.ej. `FERIANET_TICKETS_DIR` no escribible -> NoOp). Antes de
+/// TEAM-014 esto se manifestaba como "Impresora OK" verde, lo que
+/// era enganoso.
+///
+/// Campos:
+/// - `kind`: backend activo actualmente (el que responderia a un
+///   `deliver()`).
+/// - `attempted_kind`: backend que se intento usar originalmente
+///   antes del fallback. `Some(k)` indica que hubo fallback.
+/// - `healthy`: `health_check()` del backend activo (true si OK).
+///   Si hay `init_error`, esto sera `false` aunque el backend
+///   activo (NoOp) reporte OK por contrato.
+/// - `devices`: dispositivos detectados por el backend activo.
+///   Util para el tooltip del badge.
+/// - `init_error`: mensaje legible del error en el arranque (si lo
+///   hubo). La UI lo muestra verbatim o lo resume.
+/// - `backend_label`: etiqueta legible ya formateada para mostrar
+///   al operador (p.ej. "Thermal (USB)", "NoOp (fallback desde File: ...)").
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeliveryStatus {
+    pub kind: DeliveryKind,
+    pub attempted_kind: Option<DeliveryKind>,
+    pub healthy: bool,
+    pub devices: Vec<String>,
+    pub init_error: Option<String>,
+    pub backend_label: String,
+}
+
 // ============================================================
 // Commands
 // ============================================================
@@ -300,6 +334,94 @@ pub async fn delivery_health_check(
         .health_check()
         .await
         .map_err(|e| SerializableError::from(crate::errors::AppError::from(e)))
+}
+
+/// Estado completo del backend de impresion para la UI.
+///
+/// Cierra el hallazgo H1 del QA de la epica 3: el frontend puede
+/// ahora distinguir "NoOp sin error" (modo demo) de "NoOp con
+/// fallback" (alguien configuro algo y fallo). El campo
+/// `init_error` y `attempted_kind` exponen la informacion que antes
+/// se perdia en el fallback silencioso del `DeliveryRegistry`.
+///
+/// La UI llama a este command en el render inicial y tras el
+/// health check (no hace falta polling dedicado: el `refetchInterval`
+/// de `useDeliveryHealthCheck` ya cubre la periodicidad).
+#[tauri::command]
+pub async fn get_delivery_status(
+    state: State<'_, AppState>,
+) -> Result<DeliveryStatus, SerializableError> {
+    let registry = &state.delivery;
+    let kind = registry.kind();
+    let attempted_kind = registry.attempted_backend();
+    let init_error = registry.init_error().map(|s| s.to_string());
+
+    // Health check. Si init_error esta presente, devuelve Err y por
+    // tanto healthy=false; si no, delegamos al backend activo.
+    let healthy = registry.health_check().await.is_ok();
+
+    // Listado de dispositivos del backend activo. Si falla, logueamos
+    // y devolvemos lista vacia (no es bloqueante para el command).
+    let devices = match registry.list_devices().await {
+        Ok(devs) => devs,
+        Err(e) => {
+            warn!(
+                target: "cmd.delivery.get_delivery_status",
+                error = %e,
+                "list_devices fallo; devolviendo lista vacia"
+            );
+            Vec::new()
+        }
+    };
+
+    let backend_label = build_backend_label(kind, attempted_kind, init_error.as_deref());
+
+    Ok(DeliveryStatus {
+        kind,
+        attempted_kind,
+        healthy,
+        devices,
+        init_error,
+        backend_label,
+    })
+}
+
+/// Construye la etiqueta legible del backend para la UI.
+///
+/// Reglas:
+/// - Si no hay fallback: `kind` plano (p.ej. "Thermal (\\?\USB#VID_xxxx...)"
+///   o "NoOp (sin dispositivo)" o "File (C:\path)").
+/// - Si hay fallback (init_error presente): "NoOp (fallback desde
+///   {attempted_kind}: {init_error truncado})".
+fn build_backend_label(
+    kind: DeliveryKind,
+    attempted_kind: Option<DeliveryKind>,
+    init_error: Option<&str>,
+) -> String {
+    if let (Some(attempted), Some(err)) = (attempted_kind, init_error) {
+        // Truncar el error para que el label no sea un wall-of-text.
+        // 80 chars es suficiente para una cabecera y cabe en tooltip.
+        const MAX_ERR_CHARS: usize = 80;
+        let truncated: String = if err.chars().count() > MAX_ERR_CHARS {
+            let s: String = err.chars().take(MAX_ERR_CHARS).collect();
+            format!("{}...", s)
+        } else {
+            err.to_string()
+        };
+        return format!(
+            "NoOp (fallback desde {}: {})",
+            backend_kind_str(attempted),
+            truncated
+        );
+    }
+    // Sin fallback: etiqueta segun el backend activo.
+    match kind {
+        DeliveryKind::Thermal => "Thermal (configurado)".to_string(),
+        DeliveryKind::File => "File (configurado)".to_string(),
+        DeliveryKind::Noop => "NoOp (sin dispositivo)".to_string(),
+        DeliveryKind::Rfid => "Rfid (no implementado v1)".to_string(),
+        DeliveryKind::Unknown => "Unknown (estado inconsistente)".to_string(),
+    }
 }
 
 // ============================================================

@@ -120,11 +120,14 @@ pub fn run() {
             // `ticket-delivery` (epica 3 / TEAM-012). La venta
             // NO llama a estos commands; se invocan desde la UI
             // (auto-print tras venta, retry de pendientes,
-            // listado de dispositivos, health check).
+            // listado de dispositivos, health check, estado
+            // completo para badge en cabecera con deteccion de
+            // fallback -- H1 cerrado en TEAM-014).
             cmd_delivery::print_ticket,
             cmd_delivery::retry_pending_tickets,
             cmd_delivery::list_delivery_devices,
             cmd_delivery::delivery_health_check,
+            cmd_delivery::get_delivery_status,
         ])
         .run(tauri::generate_context!())
         .expect("error al ejecutar la aplicacion Tauri");
