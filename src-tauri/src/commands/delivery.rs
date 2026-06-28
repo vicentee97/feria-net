@@ -121,139 +121,23 @@ pub struct DeliveryStatus {
 ///
 /// La latencia se mide en memoria y se devuelve al frontend
 /// (no se persiste; el schema V003 no tiene columna para ello).
+///
+/// **Implementacion**: delega en `execute_print` (helper interno)
+/// para que `retry_pending_tickets` reuse el mismo flujo sin
+/// duplicar ~95 lineas (cierra el P2 del @revisor en la revision
+/// de la epica 3).
 #[tauri::command]
 pub async fn print_ticket(
     state: State<'_, AppState>,
     ticket_id: String,
 ) -> Result<PrintTicketResult, SerializableError> {
-    let started = Instant::now();
     let ticket_uuid = parse_uuid(&ticket_id)?;
-    let backend_kind = state.delivery.kind();
-
     debug!(
         target: "cmd.delivery.print_ticket",
         ticket_id = %ticket_uuid,
-        backend = %backend_kind_str(backend_kind),
-        "iniciando intento de impresion"
+        "delegando en execute_print"
     );
-
-    // 1. Cargar ticket. Si no existe -> error de input (no es
-    //    fallo de delivery, es bug del caller).
-    let mut conn = state.db.conn().await;
-    let ticket = repo_tickets::get_ticket(&mut *conn, &ticket_uuid)
-        .map_err(SerializableError::from)?
-        .ok_or_else(|| {
-            SerializableError::from(AppError::NotFound(format!(
-                "no existe el ticket {}",
-                ticket_uuid
-            )))
-        })?;
-
-    // 2. Cargar atraccion para resolver el nombre.
-    let attraction = repo_attractions::get_attraction(&mut *conn, &ticket.attraction_id)
-        .map_err(SerializableError::from)?
-        .ok_or_else(|| {
-            SerializableError::from(AppError::NotFound(format!(
-                "no existe la atraccion {} del ticket {}",
-                ticket.attraction_id, ticket_uuid
-            )))
-        })?;
-
-    // 3. Formatear payload segun el backend activo.
-    let payload: Vec<u8> = match backend_kind {
-        DeliveryKind::Thermal => format_ticket_for_thermal(&ticket, &attraction.name),
-        DeliveryKind::File => format_ticket_for_file(&ticket, &attraction.name),
-        // NoOp / Rfid (futuro) / Unknown: payload vacio. La
-        // entrega NoOp ignora el payload por contrato del trait.
-        _ => Vec::new(),
-    };
-
-    // 4. Intentar la entrega. Capturamos el error SIN propagarlo
-    //    (regla dura: la venta no falla por la impresion).
-    let delivery_outcome = state
-        .delivery
-        .deliver(&ticket.id.to_string(), &payload)
-        .await;
-
-    let latency_ms = started.elapsed().as_millis() as u64;
-    let now = chrono::Utc::now();
-
-    let (
-        success,
-        outcome,
-        error_code,
-        error_detail,
-    ) = match &delivery_outcome {
-        Ok(()) => (
-            true,
-            DeliveryOutcome::Success,
-            DeliveryErrorCode::None,
-            None,
-        ),
-        Err(e) => {
-            warn!(
-                target: "cmd.delivery.print_ticket",
-                ticket_id = %ticket_uuid,
-                backend = %backend_kind_str(backend_kind),
-                error = %e,
-                "fallo la entrega"
-            );
-            (
-                false,
-                DeliveryOutcome::Failure,
-                err_code_from_str(e.to_error_code()),
-                Some(e.to_string()),
-            )
-        }
-    };
-
-    // 5. Registrar el intento en BD. Si la propia BD falla aqui
-    //    (muy raro), lo logueamos pero NO revertimos la entrega:
-    //   我们已经知道了 el resultado del backend y eso es lo que
-    //    importa al operador.
-    let payload_for_bd: Option<Vec<u8>> = if payload.is_empty() {
-        None
-    } else if payload.len() > MAX_PAYLOAD_BYTES {
-        Some(payload[..MAX_PAYLOAD_BYTES].to_vec())
-    } else {
-        Some(payload)
-    };
-
-    let attempt_input = CreateDeliveryAttemptInput {
-        ticket_id: ticket_uuid,
-        delivery_kind: backend_kind,
-        outcome,
-        error_code,
-        error_detail: error_detail.clone(),
-        payload: payload_for_bd,
-        attempted_at: now,
-    };
-
-    if let Err(e) = repo_attempts::create_delivery_attempt(&mut *conn, &attempt_input) {
-        // No fallamos el command, pero el log es critico para
-        // depurar.
-        error!(
-            target: "cmd.delivery.print_ticket",
-            ticket_id = %ticket_uuid,
-            "no se pudo registrar el TicketDeliveryAttempt: {}",
-            e
-        );
-    }
-
-    let backend_kind_str = backend_kind_str(backend_kind).to_string();
-    Ok(PrintTicketResult {
-        ticket_id: ticket_uuid.to_string(),
-        success,
-        outcome: outcome.as_str().to_string(),
-        error_code: if error_code == DeliveryErrorCode::None {
-            None
-        } else {
-            Some(error_code.as_str().to_string())
-        },
-        error_detail,
-        latency_ms,
-        backend_kind: backend_kind_str,
-    })
+    execute_print(&state, ticket_uuid).await
 }
 
 /// Reintenta la entrega de todos los tickets pendientes de una caja.
@@ -290,9 +174,10 @@ pub async fn retry_pending_tickets(
 
     for ticket in pending {
         // Llamamos al mismo flujo que print_ticket. Reutilizamos
-        // la funcion helper local `deliver_one` para evitar
-        // re-abrir el `State` por cada ticket.
-        let result = deliver_one(&state, ticket.id).await?;
+        // la funcion helper local `execute_print` para evitar
+        // re-abrir el `State` por cada ticket y para no duplicar
+        // ~95 lineas de logica (P2 @revisor, cerrado en TEAM-014).
+        let result = execute_print(&state, ticket.id).await?;
         if result.success {
             succeeded += 1;
         } else {
@@ -428,15 +313,42 @@ fn build_backend_label(
 // Helpers
 // ============================================================
 
-/// Refactor de `print_ticket` para reutilizar en `retry_pending_tickets`.
-/// No es un `#[tauri::command]`; solo se llama desde Rust.
-async fn deliver_one(
+/// Flujo canonico para imprimir un ticket.
+///
+/// Usado por `print_ticket` (un ticket en respuesta a una venta)
+/// y por `retry_pending_tickets` (cada ticket pendiente de una
+/// caja). Centraliza los ~95 lineas que antes estaban duplicadas
+/// entre `print_ticket` y el antiguo `deliver_one` (P2 @revisor
+/// en la revision de la epica 3, cerrado en TEAM-014).
+///
+/// Pasos:
+/// 1. Carga ticket + atraccion desde BD.
+/// 2. Construye el payload segun el `DeliveryKind` activo.
+/// 3. Llama a `registry.deliver()` capturando el error (regla dura:
+///    la venta NUNCA falla por la impresion).
+/// 4. Mide latencia y traduce el resultado a `PrintTicketResult`.
+/// 5. Registra el intento en `ticket_delivery_attempt` (truncando
+///    el payload a `MAX_PAYLOAD_BYTES`). Si la propia BD falla
+///    aqui, se loguea pero NO se aborta: ya tenemos el resultado
+///    del backend, que es lo que importa al operador.
+///
+/// No es un `#[tauri::command]`: solo se llama desde Rust.
+async fn execute_print(
     state: &State<'_, AppState>,
     ticket_id: Uuid,
 ) -> Result<PrintTicketResult, SerializableError> {
     let started = Instant::now();
     let backend_kind = state.delivery.kind();
 
+    debug!(
+        target: "cmd.delivery.execute_print",
+        ticket_id = %ticket_id,
+        backend = %backend_kind_str(backend_kind),
+        "iniciando intento de impresion"
+    );
+
+    // 1. Cargar ticket. Si no existe -> error de input (no es
+    //    fallo de delivery, es bug del caller).
     let mut conn = state.db.conn().await;
     let ticket = repo_tickets::get_ticket(&mut *conn, &ticket_id)
         .map_err(SerializableError::from)?
@@ -447,6 +359,7 @@ async fn deliver_one(
             )))
         })?;
 
+    // 2. Cargar atraccion para resolver el nombre.
     let attraction = repo_attractions::get_attraction(&mut *conn, &ticket.attraction_id)
         .map_err(SerializableError::from)?
         .ok_or_else(|| {
@@ -456,12 +369,17 @@ async fn deliver_one(
             )))
         })?;
 
+    // 3. Formatear payload segun el backend activo.
     let payload: Vec<u8> = match backend_kind {
         DeliveryKind::Thermal => format_ticket_for_thermal(&ticket, &attraction.name),
         DeliveryKind::File => format_ticket_for_file(&ticket, &attraction.name),
+        // NoOp / Rfid (futuro) / Unknown: payload vacio. La
+        // entrega NoOp ignora el payload por contrato del trait.
         _ => Vec::new(),
     };
 
+    // 4. Intentar la entrega. Capturamos el error SIN propagarlo
+    //    (regla dura: la venta no falla por la impresion).
     let delivery_outcome = state
         .delivery
         .deliver(&ticket.id.to_string(), &payload)
@@ -477,14 +395,27 @@ async fn deliver_one(
             DeliveryErrorCode::None,
             None,
         ),
-        Err(e) => (
-            false,
-            DeliveryOutcome::Failure,
-            err_code_from_str(e.to_error_code()),
-            Some(e.to_string()),
-        ),
+        Err(e) => {
+            warn!(
+                target: "cmd.delivery.execute_print",
+                ticket_id = %ticket_id,
+                backend = %backend_kind_str(backend_kind),
+                error = %e,
+                "fallo la entrega"
+            );
+            (
+                false,
+                DeliveryOutcome::Failure,
+                err_code_from_str(e.to_error_code()),
+                Some(e.to_string()),
+            )
+        }
     };
 
+    // 5. Registrar el intento en BD. Si la propia BD falla aqui
+    //    (muy raro), lo logueamos pero NO revertimos la entrega:
+    //    ya conocemos el resultado del backend y eso es lo que
+    //    importa al operador.
     let payload_for_bd: Option<Vec<u8>> = if payload.is_empty() {
         None
     } else if payload.len() > MAX_PAYLOAD_BYTES {
@@ -505,14 +436,14 @@ async fn deliver_one(
 
     if let Err(e) = repo_attempts::create_delivery_attempt(&mut *conn, &attempt_input) {
         error!(
-            target: "cmd.delivery.retry",
+            target: "cmd.delivery.execute_print",
             ticket_id = %ticket_id,
             "no se pudo registrar el TicketDeliveryAttempt: {}",
             e
         );
     }
 
-    let backend_kind_str = backend_kind_str(backend_kind).to_string();
+    let backend_kind_str_value = backend_kind_str(backend_kind).to_string();
     Ok(PrintTicketResult {
         ticket_id: ticket_id.to_string(),
         success,
@@ -524,7 +455,7 @@ async fn deliver_one(
         },
         error_detail,
         latency_ms,
-        backend_kind: backend_kind_str,
+        backend_kind: backend_kind_str_value,
     })
 }
 
