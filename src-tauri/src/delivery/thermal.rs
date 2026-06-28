@@ -33,12 +33,25 @@
 //! fisico real** en el entorno de desarrollo. La validacion con
 //! impresoras de feriante (S-B del ARCHITECTURE §2.5) es un
 //! entregable de la epica 9 de QA.
+//!
+//! **Timeout (TEAM-014)**: `deliver()` envuelve la escritura con
+//! un timeout de 5 segundos via `tokio::time::timeout` (sobre un
+//! `spawn_blocking` para no bloquear el executor). Sin esto, una
+//! impresora que cuelga (USB stall, driver zombi) dejaba la UI en
+//! "Imprimiendo..." indefinidamente (P2 @revisor).
+
+use std::time::Duration;
 
 use async_trait::async_trait;
 use tracing::{debug, warn};
 
 use crate::delivery::backend::{DeliveryBackend, DeliveryError};
 use crate::domain::ticket_delivery_attempt::DeliveryKind;
+
+/// Timeout maximo para una operacion de escritura en la impresora.
+/// Si la impresora no responde en este tiempo, devolvemos
+/// `DeliveryError::Timeout` en lugar de bloquear indefinidamente.
+const DELIVER_TIMEOUT_SECS: u64 = 5;
 
 // =================================================================
 // Codigo Windows: usa `escpos::driver::WindowsUsbPrintDriver`.
@@ -225,9 +238,73 @@ impl DeliveryBackend for ThermalPrinterDelivery {
             "entregando ticket a termica"
         );
 
-        // El modulo `imp` encapsula el ciclo abrir->escribir->flush
-        // para que esta capa no necesite importar el trait `Driver`
-        // de `escpos`.
-        imp::write_payload(&self.device_path, payload)
+        // La escritura real va por `do_write` (async, usa
+        // `spawn_blocking` para que el USB I/O sincrono no bloquee
+        // el executor de tokio). Anadimos un timeout para que una
+        // impresora que cuelga devuelva `Timeout` en lugar de
+        // dejar la UI colgada (P2 @revisor, TEAM-014).
+        let device_path = self.device_path.clone();
+        let payload_owned = payload.to_vec();
+        let ticket_id_owned = ticket_id.to_string();
+
+        match tokio::time::timeout(
+            Duration::from_secs(DELIVER_TIMEOUT_SECS),
+            Self::do_write(device_path, payload_owned, ticket_id_owned),
+        )
+        .await
+        {
+            Ok(inner_result) => inner_result,
+            Err(_elapsed) => {
+                warn!(
+                    target: "delivery.thermal",
+                    timeout_secs = DELIVER_TIMEOUT_SECS,
+                    device = %self.device_path,
+                    "timeout: la impresora no respondio a tiempo"
+                );
+                Err(DeliveryError::Timeout(format!(
+                    "La impresora no respondio en {} segundos (device={})",
+                    DELIVER_TIMEOUT_SECS, self.device_path
+                )))
+            }
+        }
+    }
+}
+
+impl ThermalPrinterDelivery {
+    /// Escribe `payload` a la impresora, en un hilo bloqueante.
+    ///
+    /// Se ejecuta dentro de `tokio::task::spawn_blocking` para que
+    /// las llamadas Win32 sincronas (`CreateFile` / `WriteFile` /
+    /// `CloseHandle` via `escpos`) no bloqueen el executor async.
+    /// Cualquier panic del hilo se traduce a `DeliveryError::Internal`.
+    async fn do_write(
+        device_path: String,
+        payload: Vec<u8>,
+        ticket_id: String,
+    ) -> Result<(), DeliveryError> {
+        let join_result = tokio::task::spawn_blocking(move || {
+            imp::write_payload(&device_path, &payload)
+        })
+        .await;
+
+        match join_result {
+            Ok(delivery_result) => delivery_result,
+            Err(join_err) => {
+                // El worker task fallo (panic o cancelacion). El
+                // error no es del driver, es del runtime; lo
+                // reportamos como Internal para no perderlo en
+                // logs.
+                warn!(
+                    target: "delivery.thermal",
+                    ticket_id,
+                    "worker task de escritura fallo: {}",
+                    join_err
+                );
+                Err(DeliveryError::Internal(format!(
+                    "worker task de escritura termino con error: {}",
+                    join_err
+                )))
+            }
+        }
     }
 }

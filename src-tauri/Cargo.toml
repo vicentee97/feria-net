@@ -56,7 +56,10 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # --- Async runtime (necesario para comandos async en Tauri) ---
-tokio = { version = "1", features = ["sync", "rt", "rt-multi-thread", "macros"] }
+# `time` se anadio en TEAM-014 para `tokio::time::timeout` en
+# `ThermalPrinterDelivery::deliver` (P2 @revisor: sin timeout, una
+# impresora que cuelga dejaba la UI en "Imprimiendo..." indefinido).
+tokio = { version = "1", features = ["sync", "rt", "rt-multi-thread", "macros", "time"] }
 async-trait = "0.1"
 
 # --- HTTP client (sync, cuando llegue la epica 5) ---
