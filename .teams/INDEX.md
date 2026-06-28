@@ -39,5 +39,6 @@ Indice vivo de equipos de trabajo del proyecto. Convencion vigente:
 | [TEAM-014](archive/TEAM-014-fix-h1-and-cleanups.md) | Fix H1 (registry expone init_error) + execute_print helper + timeout 5s en ThermalPrinter | cerrado | 2026-06-28 | 2026-06-28 |
 | [TEAM-015](archive/TEAM-015-delivery-warning-ui.md) | UI warning fallback delivery (cierra H1 frontend) | cerrado | 2026-06-28 | 2026-06-28 |
 | [TEAM-016](archive/TEAM-016-epica-4-reports-backend.md) | Epica 4 backend: queries agregadas + 3 commands Tauri para informes (daily / feria / comparativa interanual) | cerrado | 2026-06-28 | 2026-06-28 |
+| [TEAM-017](archive/TEAM-017-epica-4-reports-frontend.md) | Epica 4 frontend: pantalla /informes con 3 tabs, graficos Recharts y exportacion CSV | cerrado | 2026-06-28 | 2026-06-28 |
 
 Repositorio remoto: <https://github.com/vicentee97/feria-net>.
