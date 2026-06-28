@@ -30,6 +30,7 @@ import type {
   CreateFairInput,
   CreateOfferInput,
   CreateSaleInput,
+  DeliveryStatus,
   Fair,
   FairEdition,
   FairEditionStatus,
@@ -548,6 +549,34 @@ export async function listDeliveryDevices(): Promise<string[]> {
 export async function deliveryHealthCheck(): Promise<void> {
   try {
     await invoke<void>("delivery_health_check");
+  } catch (e) {
+    throw toAppError(e);
+  }
+}
+
+/**
+ * Estado completo del backend de impresion para la UI.
+ *
+ * Devuelve `kind`, `attempted_kind`, `healthy`, `devices`,
+ * `init_error` y `backend_label` en una sola llamada. Permite a
+ * `PrinterHealthBadge` distinguir:
+ *  - NoOp "limpio" (modo demo / sin config) -> ambar "Sin impresora".
+ *  - NoOp tras fallback con error -> rojo "Impresora rota" + `init_error`.
+ *  - NoOp tras fallback sin error -> ambar "Sin impresora" (caso borde).
+ *  - Backend OK -> verde "Impresora OK".
+ *  - Backend no NoOp con `health_check` fallando -> rojo "Impresora con error".
+ *
+ * Cierra el H1 del QA de la epica 3 + TEAM-014 (backend) cerrando
+ * el lado frontend: el operador ve el warning de fallback en lugar
+ * del verde enganoso "Impresora OK" pre-TEAM-014.
+ *
+ * Si el command falla (raro; los getters no lanzan), `toAppError`
+ * traduce el error a `AppError` para que `useDeliveryStatus`
+ * pueda pintar el badge en gris "comprobando...".
+ */
+export async function getDeliveryStatus(): Promise<DeliveryStatus> {
+  try {
+    return await invoke<DeliveryStatus>("get_delivery_status");
   } catch (e) {
     throw toAppError(e);
   }
