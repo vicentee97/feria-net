@@ -11,5 +11,6 @@ pub mod delivery_attempts;
 pub mod editions;
 pub mod fairs;
 pub mod offers;
+pub mod reports;
 pub mod sales;
 pub mod tickets;
