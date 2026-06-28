@@ -25,6 +25,7 @@ import {
   ReceiptText,
   RefreshCw,
   Settings2,
+  BarChart3,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -68,10 +69,9 @@ const NAV_ITEMS: NavItem[] = [
     activeOn: ["/tpv"],
   },
   {
+    to: "/informes",
     label: "Informes",
-    icon: ReceiptText,
-    disabled: true,
-    comingSoonLabel: "Disponible en la epica 4.",
+    icon: BarChart3,
   },
   {
     label: "Sync",
@@ -184,7 +184,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <>
           <Separator className="bg-sidebar-border" />
           <div className="p-3 text-xs text-muted-foreground">
-            v1 (MVP) · Epica 2
+            v1 (MVP) · Epica 4
           </div>
         </>
       )}

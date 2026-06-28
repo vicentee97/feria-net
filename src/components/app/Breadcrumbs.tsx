@@ -21,6 +21,7 @@
  *   /cajas/nueva                                       Cajas / Abrir caja
  *   /cajas/:id                                         Cajas / Caja ...
  *   /tpv                                               Cajas / TPV (Caja ...)
+ *   /informes                                          Informes
  */
 
 import { Link, useLocation, useParams, useSearchParams } from "react-router";
@@ -163,6 +164,11 @@ function buildCrumbs(
     }
     crumbs.push({ label: "TPV" });
     return crumbs;
+  }
+
+  // --- Informes (epica 4) ---
+  if (segs[0] === "informes") {
+    return [{ label: "Informes" }];
   }
 
   // --- Ferias (mantenido del equipo 1) ---

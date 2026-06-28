@@ -24,6 +24,7 @@
  *  /cajas/nueva                                     AbrirCaja
  *  /cajas/:id                                       CajaDetalle
  *  /tpv?session=:id                                 TpvPage
+ *  /informes                                        Informes (epica 4)
  *  *                                                NotFound
  *
  * Layout principal (sidebar) envuelve todas las rutas validas.
@@ -55,6 +56,7 @@ import { CajasListadoPage } from "@/pages/CajasListadoPage";
 import { AbrirCajaPage } from "@/pages/AbrirCajaPage";
 import { CajaDetallePage } from "@/pages/CajaDetallePage";
 import { TpvPage } from "@/pages/TpvPage";
+import { InformesPage } from "@/pages/InformesPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 
 const queryClient = new QueryClient({
@@ -121,6 +123,7 @@ const router = createBrowserRouter([
           { path: "cajas/nueva", element: <AbrirCajaPage /> },
           { path: "cajas/:id", element: <CajaDetallePage /> },
           { path: "tpv", element: <TpvPage /> },
+          { path: "informes", element: <InformesPage /> },
         ],
       },
       { path: "*", element: <NotFoundPage /> },
