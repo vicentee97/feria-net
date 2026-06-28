@@ -202,10 +202,13 @@ export function useDeliveryDevices() {
  * queremos ruido; el badge se queda gris "Comprobando..." y el
  * refetch periodico ya cubre la recuperacion.
  *
- * Sera la fuente de verdad para `PrinterHealthBadge` cuando se
- * refactorice (siguiente commit del TEAM-015); por ahora convive
- * con `useDeliveryHealthCheck` + `useDeliveryDevices` para no
- * romper consumidores legacy.
+ * Es la fuente de verdad para `PrinterHealthBadge` desde TEAM-015.
+ * Reemplaza la combinacion `useDeliveryHealthCheck` +
+ * `useDeliveryDevices` + `deriveDeliveryHealthStatus` que existia
+ * antes: una sola llamada da `kind`, `attempted_kind`, `healthy`,
+ * `devices`, `init_error` y `backend_label`, suficientes para
+ * distinguir los 5 estados visuales que el operador necesita ver
+ * (cierra el lado frontend del H1 del QA de la epica 3).
  */
 export function useDeliveryStatus() {
   return useQuery({
@@ -215,46 +218,4 @@ export function useDeliveryStatus() {
     retry: false,
     staleTime: 15 * 1000,
   });
-}
-
-// ============================================================
-// Helper: derivar estado de salud para el indicador
-// ============================================================
-
-/**
- * Estados posibles del indicador de salud del backend de impresion.
- *  - `unknown`: todavia no se ha hecho el primer health check.
- *  - `ok`:      health OK + hay dispositivos listados.
- *  - `noop`:    health OK pero el unico "dispositivo" es NoOp
- *               (modo demo / fallback). Aviso discreto.
- *  - `error`:   health falla (impresora desconectada, error de I/O, etc).
- */
-export type DeliveryHealthStatus = "unknown" | "ok" | "noop" | "error";
-
-/**
- * Deriva el estado del indicador a partir del resultado de las dos
- * queries. Pensado para ser consumido por el chip de la cabecera y
- * por el tooltip del icono de impresora en el TPV.
- *
- * Reglas (decision senior; ver JSDoc del TEAM-013):
- *  - Si `health` esta cargando -> "unknown".
- *  - Si `health` fallo        -> "error".
- *  - Si `health` OK + devices lista contiene solo "NoOp ..." -> "noop".
- *  - Si `health` OK + devices lista tiene entradas reales      -> "ok".
- *  - Si `health` OK + devices vacio (carga aun)               -> "unknown".
- */
-export function deriveDeliveryHealthStatus(args: {
-  healthIsPending: boolean;
-  healthIsError: boolean;
-  devices: string[] | undefined;
-}): DeliveryHealthStatus {
-  if (args.healthIsPending) return "unknown";
-  if (args.healthIsError) return "error";
-  if (!args.devices) return "unknown";
-  if (args.devices.length === 0) return "unknown";
-  // Deteccion de NoOp: la unica entrada y empieza por "NoOp".
-  const onlyNoop =
-    args.devices.length === 1 &&
-    args.devices[0].toLowerCase().startsWith("noop");
-  return onlyNoop ? "noop" : "ok";
 }

@@ -38,11 +38,6 @@ import {
 } from "@/components/ui/tooltip";
 import { Breadcrumbs } from "@/components/app/Breadcrumbs";
 import { PrinterHealthBadge } from "@/components/app/PrinterHealthBadge";
-import {
-  deriveDeliveryHealthStatus,
-  useDeliveryDevices,
-  useDeliveryHealthCheck,
-} from "@/hooks/queries/delivery";
 
 interface NavItem {
   to?: string;
@@ -104,13 +99,11 @@ export function MainLayout() {
   // Estado del backend de impresion (epica 3). Es informativo: NO
   // bloquea la UI ni muestra modales. Solo renderiza un chip
   // discreto en la cabecera a la derecha de los breadcrumbs.
-  const health = useDeliveryHealthCheck();
-  const devices = useDeliveryDevices();
-  const printerStatus = deriveDeliveryHealthStatus({
-    healthIsPending: health.isPending,
-    healthIsError: health.isError,
-    devices: devices.data,
-  });
+  // El chip consume `useDeliveryStatus` internamente (1 sola llamada
+  // al backend: kind, attempted_kind, healthy, devices, init_error,
+  // backend_label). Reemplaza la combinacion health+devices de la
+  // primera version (cerrado en TEAM-015 para el lado frontend del
+  // H1 del QA de la epica 3).
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -121,10 +114,7 @@ export function MainLayout() {
             <div className="min-w-0 flex-1">
               <Breadcrumbs />
             </div>
-            <PrinterHealthBadge
-              status={printerStatus}
-              devices={devices.data}
-            />
+            <PrinterHealthBadge />
           </header>
           <div className="flex-1 overflow-y-auto p-4 sm:p-6">
             <Outlet />
