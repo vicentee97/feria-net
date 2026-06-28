@@ -26,7 +26,7 @@ use tracing_subscriber::{fmt, EnvFilter};
 use crate::commands::{
     attractions as cmd_attractions, cash_sessions as cmd_cash_sessions,
     delivery as cmd_delivery, editions as cmd_editions, fairs as cmd_fairs,
-    offers as cmd_offers, sales as cmd_sales,
+    offers as cmd_offers, reports as cmd_reports, sales as cmd_sales,
 };
 use crate::db::DbPool;
 use crate::delivery::DeliveryRegistry;
@@ -128,6 +128,10 @@ pub fn run() {
             cmd_delivery::list_delivery_devices,
             cmd_delivery::delivery_health_check,
             cmd_delivery::get_delivery_status,
+            // Informes (epica 4 / TEAM-016).
+            cmd_reports::get_daily_report,
+            cmd_reports::get_feria_report,
+            cmd_reports::get_comparative_report,
         ])
         .run(tauri::generate_context!())
         .expect("error al ejecutar la aplicacion Tauri");
