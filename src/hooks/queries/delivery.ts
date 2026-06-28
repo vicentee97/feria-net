@@ -7,6 +7,12 @@
  *      -> health check del backend activo (polling cada 30s).
  *  - `["delivery", "devices"]`
  *      -> listado de dispositivos del backend activo (polling cada 60s).
+ *  - `["delivery", "status"]`
+ *      -> estado completo del backend (kind, attempted_kind, healthy,
+ *         devices, init_error, backend_label) en una sola llamada.
+ *         Es la fuente de verdad para `PrinterHealthBadge` desde
+ *         TEAM-015; reemplaza la combinacion health+devices que
+ *         existia antes en el badge de la cabecera.
  *
  * Para `print_ticket` y `retry_pending_tickets` no hay query: son
  * mutaciones puras. `usePrintTicket` es single-ticket y `usePrintTickets`
@@ -24,6 +30,7 @@
  *                               con el resumen (X succeedidos, Y fallaron).
  *  - `useDeliveryHealthCheck`-> query sin toasts (estado global, no accion).
  *  - `useDeliveryDevices`    -> query sin toasts (estado global, no accion).
+ *  - `useDeliveryStatus`     -> query sin toasts (estado global, no accion).
  */
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -31,6 +38,7 @@ import { toast } from "sonner";
 
 import {
   deliveryHealthCheck,
+  getDeliveryStatus,
   listDeliveryDevices,
   printTicket,
   retryPendingTickets,
@@ -45,6 +53,7 @@ import type { PrintTicketResult } from "@/types/domain";
 export const deliveryKeys = {
   health: () => ["delivery", "health"] as const,
   devices: () => ["delivery", "devices"] as const,
+  status: () => ["delivery", "status"] as const,
 };
 
 // ============================================================
@@ -180,7 +189,31 @@ export function useDeliveryDevices() {
     queryKey: deliveryKeys.devices(),
     queryFn: listDeliveryDevices,
     refetchInterval: 60 * 1000,
+    retry: false,
     staleTime: 30 * 1000,
+  });
+}
+
+/**
+ * Estado completo del backend de impresion para la UI.
+ *
+ * Refetch cada 30s (misma cadencia que `useDeliveryHealthCheck`).
+ * `retry: false` por el mismo motivo: si el command falla no
+ * queremos ruido; el badge se queda gris "Comprobando..." y el
+ * refetch periodico ya cubre la recuperacion.
+ *
+ * Sera la fuente de verdad para `PrinterHealthBadge` cuando se
+ * refactorice (siguiente commit del TEAM-015); por ahora convive
+ * con `useDeliveryHealthCheck` + `useDeliveryDevices` para no
+ * romper consumidores legacy.
+ */
+export function useDeliveryStatus() {
+  return useQuery({
+    queryKey: deliveryKeys.status(),
+    queryFn: getDeliveryStatus,
+    refetchInterval: 30 * 1000,
+    retry: false,
+    staleTime: 15 * 1000,
   });
 }
 
