@@ -455,3 +455,132 @@ export interface SerializableError {
   kind: SerializableErrorKind;
   message: string;
 }
+
+// ============================================================
+// Informes v1 (epica 4 / TEAM-017)
+// ============================================================
+//
+// Espejo de `src-tauri/src/domain/report.rs`. Cualquier cambio aqui
+// debe coordinarse con un cambio equivalente en backend.
+//
+// Convencion heredada del resto del modulo: las claves vienen en
+// `snake_case` del backend (Rust `#[derive(Serialize)]` sin rename),
+// los importes en `_cents` (centimos, entero), y las fechas locales
+// en formato `YYYY-MM-DD`.
+
+/**
+ * Totales agregados compartidos por todas las proyecciones de informe.
+ * Una atraccion, un dia o una feria exponen este mismo trio.
+ */
+export interface ReportTotals {
+  /** Numero de ventas registradas. */
+  total_sales: number;
+  /** Numero de tickets vendidos (suma de `sale_line.quantity`). */
+  total_tickets: number;
+  /** Importe total cobrado en CENTIMOS. */
+  total_amount_cents: number;
+}
+
+/**
+ * Una atraccion dentro de un informe, con sus totales.
+ * Misma estructura tanto para `DailyReport.attractions` como para
+ * `FeriaReport.by_attraction`.
+ */
+export interface AttractionReport {
+  attraction_id: string;
+  attraction_name: string;
+  /** Color identificativo en formato hex `#RRGGBB`. */
+  attraction_color: string;
+  totals: ReportTotals;
+}
+
+/**
+ * Un dia concreto dentro de un informe por feria.
+ * Los totales del propio dia son la suma de todas las atracciones
+ * operadas ese dia.
+ */
+export interface DayReport {
+  /** Fecha local del operador (`YYYY-MM-DD`). */
+  date: string;
+  totals: ReportTotals;
+  attractions: AttractionReport[];
+}
+
+/**
+ * Informe por dia: totales por atraccion + total general del dia.
+ * Las atracciones sin ventas en ese dia aparecen con totales a 0.
+ */
+export interface DailyReport {
+  edition_id: string;
+  edition_year: number;
+  fair_id: string;
+  fair_name: string;
+  date: string;
+  totals: ReportTotals;
+  attractions: AttractionReport[];
+}
+
+/**
+ * Informe por feria: totales agregados de una edicion sobre un rango
+ * de fechas. `days` solo incluye los dias operados (con caja abierta);
+ * `by_attraction` incluye todas las atracciones de la edicion.
+ */
+export interface FeriaReport {
+  edition_id: string;
+  edition_year: number;
+  fair_id: string;
+  fair_name: string;
+  /** Inicio del rango solicitado (inclusivo). `YYYY-MM-DD`. */
+  from_date: string;
+  /** Fin del rango solicitado (inclusivo). `YYYY-MM-DD`. */
+  to_date: string;
+  totals: ReportTotals;
+  /** Dias operados dentro del rango, ordenados cronologicamente. */
+  days: DayReport[];
+  /** Agregado por atraccion en todo el rango. */
+  by_attraction: AttractionReport[];
+}
+
+/**
+ * Una edicion anual dentro de un informe comparativo interanual.
+ */
+export interface ComparativeEdition {
+  edition_id: string;
+  year: number;
+  /** Inicio del periodo operativo declarado de la edicion. */
+  start_date: string;
+  /** Fin del periodo operativo declarado de la edicion. */
+  end_date: string;
+  totals: ReportTotals;
+  /** Numero de dias unicos en los que se abrio caja. */
+  days_count: number;
+  /** Importe medio por dia operado (centimos). */
+  avg_daily_amount_cents: number;
+}
+
+/**
+ * Comparativa interanual: todas las ediciones de la misma feria,
+ * ordenadas por `year` ascendente. Una edicion sin ventas aparece
+ * con totales a 0 y `days_count = 0`.
+ */
+export interface ComparativeReport {
+  fair_id: string;
+  fair_name: string;
+  editions: ComparativeEdition[];
+}
+
+/** Input para `get_daily_report`. */
+export interface GetDailyReportInput {
+  edition_id: string;
+  /** `YYYY-MM-DD` (fecha local del operador). */
+  date: string;
+}
+
+/** Input para `get_feria_report`. */
+export interface GetFeriaReportInput {
+  edition_id: string;
+  /** Inicio del rango (inclusivo). `YYYY-MM-DD`. */
+  from_date: string;
+  /** Fin del rango (inclusivo). `YYYY-MM-DD`. */
+  to_date: string;
+}
