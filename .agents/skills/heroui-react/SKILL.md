@@ -1,6 +1,6 @@
 ---
 name: heroui-react
-description: "Guia a la IA para usar HeroUI v3 correctamente en proyectos React: componentes, variantes, theming, anti-patrones de v2 y consulta de documentacion oficial antes de implementar UI. TRIGGERS: HeroUI, hero-ui, boton heroui, card heroui, tabla heroui, componente heroui, theming heroui."
+description: "Usar cuando implementes UI en React con HeroUI v3 (botones, tablas, cards, modales, theming) y necesites evitar anti-patrones de v2 consultando la documentacion oficial antes de tocar componentes. TRIGGERS: HeroUI, hero-ui, boton heroui, card heroui, tabla heroui, componente heroui, theming heroui."
 ---
 
 # HeroUI React
@@ -20,6 +20,7 @@ Guia operativa para trabajar con HeroUI v3 en proyectos React sin mezclar patron
 - No debe copiar implementaciones internas de la libreria como si fueran codigo de aplicacion salvo necesidad de aprendizaje puntual.
 
 # Inputs / contexto obligatorio
+- Memoria acumulativa: leer `preferences.md` de esta carpeta si existe y aplicar sus reglas sin repreguntar.
 - [SSOT del repositorio](../docs/SSOT.md).
 - [Reglas globales compartidas](../docs/AI_GLOBAL_RULES.md).
 - SSOT y documentacion visual del proyecto actual.
@@ -28,7 +29,10 @@ Guia operativa para trabajar con HeroUI v3 en proyectos React sin mezclar patron
 - Si el proyecto documenta una fuente MCP preferente para HeroUI, usarla antes de improvisar.
 
 # Comportamiento esperado
+**Sello de verificacion:** validar este fichero contra `@heroui/react` <version exacta> en <fecha> antes de fiarse de las tablas de compatibilidad.
+
 Antes de proponer o escribir codigo con HeroUI, la skill debe:
+0. Ejecutar `npm ls @heroui/react` en el proyecto y anotar la version; si difiere del sello, contrastar las tablas antes de usarlas.
 1. Confirmar que el proyecto realmente usa HeroUI v3 o que esa adopcion encaja con el stack existente.
 2. Revisar la version real de `@heroui/react`, `@heroui/styles`, Tailwind y dependencias relacionadas.
 3. Consultar documentacion viva del componente o guia necesaria antes de usar props, variantes o estructura.
@@ -127,12 +131,12 @@ node scripts/get_docs.mjs /docs/react/getting-started/theming
 - [ ] Ajustar tema, variantes y `className`/`classNames` solo cuando haga falta de verdad.
 - [ ] Validar estados abiertos, focus, loading, empty y error cuando el componente los tenga.
 
-# Criterio de resultado bueno
-- La implementacion usa HeroUI v3 real y no patrones heredados de v2.
-- Los componentes se montan con props y variantes que existen de verdad.
-- La decision de theming o estilos respeta el sistema oficial y el contexto del proyecto.
-- La IA se apoya en documentacion viva antes de improvisar.
-- Los scripts locales de la skill siguen siendo suficientes para recuperar docs, source y theme data.
+# Criterio de resultado bueno (gate de cierre, auto-cita)
+- [ ] **Declaro** el resultado de `npm ls @heroui/react` y que el sello de verificacion esta al dia (o que las tablas fueron contrastadas con la version real).
+- [ ] **Declaro** que la implementacion usa HeroUI v3 real (sin patrones heredados de v2) con props y variantes que existen de verdad.
+- [ ] **Declaro** que onPress/onClick se decidio por la regla binaria (v3 = onPress; onClick solo si la doc del componente lo lista).
+- [ ] **Declaro** que theming y estilos respetan el sistema oficial de HeroUI y el contexto del proyecto.
+- [ ] **Declaro** el apoyo usado: documentacion viva o scripts locales de la skill, antes de improvisar.
 
 ## Triggers
 - Keywords: HeroUI, hero-ui, boton heroui, card heroui, tabla heroui, componente heroui, theming heroui

@@ -1,0 +1,43 @@
+# Plantilla minima de CI para monorepos con paquetes heterogeneos.
+# Punto de partida: adapta la lista de paquetes y los paths a tu layout concreto.
+# Idea: ejecutar CI solo cuando cambian archivos relevantes de cada paquete.
+# Versiones estables a jun-2026: actions/checkout@v7, dorny/paths-filter@v4.
+# Los workflows por stack (ci-node.yml, ci-python.yml) deben vivir en .github/workflows/.
+name: ci-monorepo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      node: ${{ steps.filter.outputs.node }}
+      python: ${{ steps.filter.outputs.python }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            node:
+              - 'packages/node/**'
+              - 'package.json'
+            python:
+              - 'packages/python/**'
+              - 'pyproject.toml'
+
+  # Reutiliza los workflows por stack definidos en .github/workflows/.
+  # Adapta las rutas si tu layout es distinto.
+  node:
+    needs: changes
+    if: needs.changes.outputs.node == 'true'
+    uses: ./.github/workflows/ci-node.yml
+
+  python:
+    needs: changes
+    if: needs.changes.outputs.python == 'true'
+    uses: ./.github/workflows/ci-python.yml

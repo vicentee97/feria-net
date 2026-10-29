@@ -1,183 +1,122 @@
 ---
 name: auditar-proyecto-tecnico
-description: "Audita la salud tecnica del proyecto en dos frentes: configuracion de build tools (Tailwind, ESLint, TypeScript, Next.js, PostCSS, .gitignore) y dependencias (paquetes sin usar, redundantes o desactualizados), verificando imports reales antes de proponer cambios. TRIGGERS: auditar config, auditar dependencias, verificar configuracion, config correcta, tailwind config, eslint config, tsconfig, next config, paquetes sin usar, limpiar package.json, redundant libraries, unused packages, dependency audit, configuration audit, misconfiguration."
+description: "Usar cuando el proyecto muestre errores de build, configs inconsistentes, dependencias dudosas o paquetes sin usar: AUDITA y REPORTA con evidencia (no modifica; las acciones las ejecutan @implementador o @ingeniero-backend bajo brief). TRIGGERS: auditar config, auditar dependencias, verificar configuracion, config correcta, tailwind config, eslint config, tsconfig, next config, paquetes sin usar, limpiar package.json, dependency audit."
 ---
 
 # Auditar Proyecto Tecnico
 
-## Objetivo
-Auditar la salud tecnica del proyecto detectando misconfiguraciones, settings obsoletos, paths rotos y dependencias muertas, redundantes o desactualizadas, con evidencia concreta antes de proponer cualquier cambio.
+# Objetivo
 
-## Alcance y limites
+Auditar la salud tecnica del proyecto detectando misconfiguraciones, settings obsoletos, paths rotos y dependencias muertas, redundantes o desactualizadas, **reportando hallazgos con evidencia concreta** antes de que cualquier agente ejecutor proponga o aplique cambios.
+
+# Frontera de la skill: REPORTA, no toca (LEER PRIMERO)
+
+Esta skill es de auditoria, no de ejecucion. La frontera es estricta y debe leerse antes de cualquier paso:
+
+- **REPORTA** hallazgos con evidencia: configs rotas, paquetes candidatos a eliminacion, redundancias, settings incoherentes.
+- **NEVER** modifica configs. **NEVER** elimina paquetes. **NEVER** ejecuta acciones destructivas (`npm uninstall`, `npm audit fix`, upgrades, ediciones de config) por iniciativa propia.
+- Las acciones reales las ejecutan **@implementador** o **@ingeniero-backend** bajo brief explicito del usuario o de @orquestador, con su propio gate de validacion.
+- Si el brief autoriza acciones concretas, la skill puede **recomendar** el comando exacto, pero la ejecucion la hace el agente ejecutor.
+- Excepcion: typecheck, build y lint son comandos de verificacion no destructivos. La skill los ejecuta como parte del gate obligatorio MUST.
+
+Razon: una auditoria que destruye pierde su utilidad como checkpoint neutral. El nombre "auditar" describe reportar evidencia, no intervenir.
+
+# Anti-patrones y su correccion
+
+Cada sesgo fuerte del entrenamiento base necesita su par MAL -> BIEN -> EJEMPLO. Reconocer el anti-patron no basta para vencerlo.
+
+- **Borrar por limpieza:** MAL eliminar un paquete porque no hay `import` estatico evidente. BIEN grep contra los 4 casos trampa (ver abajo) antes de marcar como candidato. EJEMPLO `@types/node` no se importa pero rompe tipos de `process.env`.
+- **Defaults genericos:** MAL activar `reactStrictMode: true` o `darkMode: 'class'` por memoria. BIEN contrastar cada setting con el config real y la estructura del proyecto. EJEMPLO no asumir `content: ['./src/**/*']` si el proyecto usa App Router con `./app/**/*`.
+- **Marcar sin evidencia:** MAL reportar "hay paquetes sin usar" sin haber grep'eado. BIEN cada hallazgo cita el comando ejecutado y su resultado. EJEMPLO "paquete X: 0 resultados en `rg 'from \"...'X' src/`, 0 en configs raiz".
+- **Intervenir destruyendo:** MAL ejecutar `npm audit fix`, `npm uninstall` o upgrades masivos por iniciativa propia. BIEN reportar candidatos con evidencia y dejar la ejecucion a @implementador/@ingeniero-backend bajo brief. EJEMPLO reporte "paquete Y candidato a eliminacion; `npm uninstall Y` + typecheck lo ejecuta @implementador".
+- **Asumir transitive sin verificar:** MAL marcar como eliminable un paquete que es dependencia transitive de otro directo. BIEN verificar el arbol con `npm ls <paquete>` antes de proponer eliminacion. EJEMPLO `ts-node` puede estar requerido por tooling de tipos aunque no haya imports en `src/`.
+- **Cambio de config por reflejo:** MAL anadir regla ESLint, plugin PostCSS o path Tailwind "estandar" sin contrastar. BIEN contrastar cada cambio con el config real y la estructura del proyecto. EJEMPLO no anadir `darkMode: 'class'` sin leer el bloque `@theme`/`darkMode` real.
+
+## Verificacion de uso: los 4 casos trampa
+
+Antes de marcar cualquier paquete como "no usado", grep contra los 4 casos trampa. Un solo caso positivo descarta la eliminacion. El metodo grep es lo mas valioso de esta skill: si se omite, el reporte pierde valor.
+
+1. **CLI tools** (`prisma`, `eslint`, `prettier`, `husky`, `lint-staged`...): se invocan desde scripts, no desde imports. Verificar `scripts` en `package.json`.
+2. **Paquetes de tipos** (`@types/*`): no se importan, pero alimentan tipos globales (`@types/node` -> `process.env`, `@types/react` -> JSX). Verificar si el proyecto usa TypeScript.
+3. **Usados en archivos de config** (`next.config.*`, `tailwind.config.*`, `eslint.config.*`, `postcss.config.*`): grep tambien en raiz, no solo en `src/`.
+4. **Imports dinamicos** (`import()`, `require(variable)`): grep por el nombre del paquete como string literal, no solo como `from "X"`.
+
+Patron base (PowerShell): `rg 'nombre-paquete' src/ ; rg 'nombre-paquete' *.config.* ; rg '"nombre-paquete"' .` Si los 4 casos devuelven 0 resultados, el paquete es candidato a eliminacion: reportar (no eliminar).
+
+# Alcance y limites
+
 - Incluye verificar configs de Tailwind, ESLint, TypeScript, Next.js, PostCSS y `.gitignore`.
-- Incluye escanear `package.json` contra imports reales y detectar librerias redundantes.
+- Incluye escanear `package.json` contra imports reales y detectar librerias redundantes por proposito.
 - Incluye detectar settings desactivados que deberian estar activos y paths que no coinciden con la estructura real.
-- No cambia configs ni elimina paquetes sin confirmacion o brief explicito.
-- No elimina transitive deps (las que necesitan otros paquetes directos).
-- No asume que un paquete esta sin usar sin comprobar imports dinamicos, configs y CLI tools.
-- No ejecuta `npm audit fix` ni actualiza versiones sin confirmacion.
-- No redefine estrategias de testing ni arquitectura.
+- NEVER cambia configs ni elimina paquetes por iniciativa propia; solo bajo brief explicito.
+- NEVER elimina transitive deps (las necesitan otros paquetes directos).
+- NEVER ejecuta `npm audit fix`, `npm uninstall` ni actualiza versiones por iniciativa propia.
+- No redefine estrategias de testing ni arquitectura; si lo requiere, escalar a @arquitecto.
 
-## Inputs / contexto obligatorio
-- Todos los archivos de configuracion en la raiz del proyecto.
-- `package.json`, lockfile y scripts reales del proyecto.
-- Todos los archivos fuente en `src/` o equivalentes.
-- Archivos de configuracion que puedan importar paquetes (next.config, tailwind.config, eslint.config, postcss.config, etc.).
-- Estructura real del proyecto.
-- Build y typecheck del proyecto como verificacion final.
+# Inputs / contexto obligatorio
 
-## Comportamiento esperado
-La auditoria sigue el patron inventario -> verificacion -> reporte, sin ejecutar acciones destructivas por iniciativa propia. Reporta hallazgos por impacto, separando errores reales de mejoras opcionales, y recomienda correcciones sin editar nada salvo confirmacion o brief explicito.
+- Todos los archivos de config en raiz (`tailwind.config.*`, `eslint.config.*`, `tsconfig.json`, `next.config.*`, `postcss.config.*`, `.gitignore`).
+- `package.json`, lockfile y scripts reales.
+- Todos los archivos fuente en `src/`, `app/`, `pages/` o equivalentes.
+- Estructura real del proyecto (no asumir estructura estandar).
+- Build, typecheck y lint del proyecto como verificacion final.
 
-### 1. Configuracion de build tools
-Verificar que las configs sean correctas, completas y esten alineadas con la estructura real.
+# Comportamiento esperado
 
-#### 1.1 Tailwind CSS
-- [ ] `content` paths coinciden con los directorios reales de codigo fuente.
-- [ ] App Router incluido (no solo Pages Router).
-- [ ] No faltan directorios que contengan clases Tailwind.
-- [ ] No hay paths obsoletos apuntando a directorios inexistentes.
-- [ ] `darkMode` configurado correctamente si el proyecto soporta temas.
-- [ ] Plugins coinciden con los que se usan realmente.
+La auditoria sigue el patron **inventario -> verificacion -> reporte**, sin ejecutar acciones destructivas. Los checks especificos por tipo de config estan en [configs.md](configs.md).
 
-#### 1.2 ESLint
-- [ ] No hay reglas `"off"` sin justificacion documentada.
-- [ ] Las reglas activas coinciden con el nivel de riesgo del proyecto.
-- [ ] No hay reglas conflictivas.
-- [ ] Extiende los presets apropiados (next/core-web-vitals, etc.).
-- [ ] `no-unused-vars` activado (con patron de ignorar `_` si se usa).
-- [ ] `react-hooks/exhaustive-deps` activado.
-- [ ] `no-console` activado (al menos en `"warn"`).
+1. **Inventario**: leer `package.json` y listar dependencias directas (`dependencies` + `devDependencies`).
+2. **Verificacion de uso**: para cada dependencia, grep por los 4 casos trampa. Marcar "usada" / "candidata" / "incierta" con evidencia del comando ejecutado.
+3. **Redundancia**: buscar grupos que cubren el mismo proposito (iconos, animacion, formularios, estado). Recomendar cual mantener por uso real, tamano de bundle y mantenimiento activo.
+4. **Configs**: ejecutar los checks de [configs.md](configs.md) por cada config presente.
+5. **Validacion final** (GATE OBLIGATORIO MUST, ver abajo): typecheck + build + lint.
+6. **Reporte**: hallazgos clasificados P1/P2/P3 con evidencia, separando errores reales de mejoras opcionales.
 
-#### 1.3 TypeScript
-- [ ] `strict: true` activado.
-- [ ] `noImplicitAny: true` activado.
-- [ ] `strictNullChecks` activado (implicito con strict).
-- [ ] `compilerOptions` coinciden con las necesidades del proyecto.
-- [ ] `include`/`exclude` paths correctos.
-- [ ] `moduleResolution` correcto para el framework.
+# Cierre OBLIGATORIO: gate de auto-cita
 
-#### 1.4 Next.js
-- [ ] `next.config.ts` headers de seguridad correctos.
-- [ ] CSP directives coinciden con los recursos externos reales.
-- [ ] Metadata base URL correcta (no placeholders).
-- [ ] Image domains configurados si se usan imagenes externas.
-- [ ] `reactStrictMode: true` activado.
-- [ ] `output` configurado correctamente para el tipo de despliegue.
+Antes de declarar la auditoria lista, declarar (auto-cita con evidencia, no auto-evaluacion). Maximo 7 items:
 
-#### 1.5 PostCSS
-- [ ] Plugin de Tailwind presente.
-- [ ] No hay plugins redundantes o conflictivos.
+- [ ] **Declaro** que cargue los configs + `package.json` + estructura real del proyecto (no defaults de memoria).
+- [ ] **Declaro** que para cada paquete marcado como "no usado", verifique los 4 casos trampa (CLI tools, `@types/*`, configs, imports dinamicos) con evidencia del grep ejecutado.
+- [ ] **Declaro** que NO se ejecuto ninguna accion destructiva (`npm uninstall`, `npm audit fix`, eliminacion de config, upgrade) sin autorizacion explicita; los cambios propuestos estan como recomendaciones en el reporte.
+- [ ] **Declaro** que verifique ausencia de secrets en configs; si los hay, los escale OBLIGATORIAMENTE a **@especialista-seguridad**.
+- [ ] **Declaro** que el reporte separa hallazgos P1/P2/P3 con evidencia del comando ejecutado por cada uno.
+- [ ] **Declaro** que el gate de typecheck + build + lint esta en estado conocido o lo deje pendiente con motivo concreto (y lo escalé a @qa-validador si fallo).
+- [ ] **Declaro** que el gate de segunda IA esta resuelto segun la tipificacion de abajo.
 
-#### 1.6 .gitignore
-- [ ] Cubre todos los archivos generados (`.next/`, `node_modules/`, `*.tsbuildinfo`, etc.).
-- [ ] Cubre archivos de entorno (`.env.local`, `.env.*.local`).
-- [ ] No ignora archivos necesarios (`.env.example` debe poder commitearse).
-- [ ] Cubre artifacts del IDE si corresponde.
+## Gate de segunda IA (OBLIGATORIO, no sugerencia)
 
-#### 1.7 General de configuracion
-- [ ] No hay secrets en archivos de configuracion.
-- [ ] No hay paths absolutos hardcoded que rompan en otras maquinas.
-- [ ] `package.json` name refleja el nombre real del proyecto.
-- [ ] Los scripts de `package.json` funcionan con el gestor de paquetes real.
+El agente que audita no es el que califica. Antes de cerrar:
 
-### 2. Dependencias
-Verificar el inventario, el uso real, la redundancia y la eliminacion segura.
+- Si la auditoria detecta **secrets, permisos mal configurados, auth sensible o datos personales** en archivos de config -> escalar OBLIGATORIAMENTE a **@especialista-seguridad**. No queda como hallazgo P3.
+- Si la auditoria se hace sobre un **cambio concreto que va a publicarse** -> delegar a **@qa-validador** para re-validar typecheck + build + lint antes de cerrar.
+- Si la auditoria revela **refactor material** (varias configs rotas, paquetes redundantes con impacto, estructura incoherente) -> delegar a **@revisor** para revision de riesgo antes de entregar el reporte.
 
-#### 2.1 Inventario
-1. Leer `package.json` y listar todas las dependencias directas (dependencies + devDependencies).
-2. Para cada dependencia, determinar su patron de importacion:
-   - Nombre del paquete: `import ... from "nombre-paquete"`
-   - Subpaths: `import ... from "nombre-paquete/subpath"`
-   - Config files: puede usarse en next.config, tailwind.config, etc.
+# Flujo recomendado
 
-#### 2.2 Verificacion de uso
-3. Para cada dependencia, grep en todo `src/` y archivos de config raiz por:
-   - `from "nombre-paquete"` o `from 'nombre-paquete'`
-   - `require("nombre-paquete")` o `require('nombre-paquete')`
-   - `import "nombre-paquete"` (side effects)
-4. Marcar como "usada" si encuentra al menos un import.
-5. Marcar como "no encontrada" si no encuentra ningun import.
-6. Para las "no encontradas", verificar:
-   - ¿Se usa en algun archivo de config? (next.config.ts, tailwind.config.ts, eslint.config, postcss.config, etc.)
-   - ¿Es una CLI tool? (prisma, eslint, prettier, etc.)
-   - ¿Es un paquete de tipos? (@types/*)
-   - ¿Es una dependencia transitive de otro paquete directo?
-7. Verificar imports dinamicos (`import()`, `require(variable)`) antes de marcar como candidato.
-
-#### 2.3 Deteccion de redundancia
-8. Buscar grupos de paquetes que cubren el mismo proposito:
-   - Multiples librerias de iconos (lucide-react, @phosphor-icons/react, react-icons, etc.)
-   - Multiples librerias de animacion (framer-motion, react-spring, etc.)
-   - Multiples librerias de formularios (react-hook-form, formik, etc.)
-   - Multiples gestores de estado (zustand, redux, jotai, etc.)
-9. Para cada grupo redundante, recomendar cual mantener basandose en:
-   - Uso real en el codigo (cual tiene mas imports)
-   - Tamano del bundle
-   - Mantenimiento activo
-
-#### 2.4 Eliminacion segura
-10. Eliminar dependencias no usadas una a una.
-11. Despues de cada eliminacion, ejecutar typecheck para verificar.
-12. Al final, ejecutar build completo.
-
-### 3. Validacion final
-13. Ejecutar typecheck completo.
-14. Ejecutar build completo.
-15. Ejecutar lint.
-16. Reportar: configs a corregir, paquetes eliminados, paquetes redundantes detectados, estado final y riesgo residual.
-
-## Anti-patterns
-- No borrar paquetes sin verificar grep primero.
-- No eliminar transitive deps (las necesitan otros paquetes directos).
-- No asumir que un paquete esta sin usar sin comprobar imports dinamicos, configs y CLI tools.
-- No eliminar paquetes de tipos (@types/*) si el proyecto usa TypeScript.
-- No ejecutar `npm audit fix` ni actualizar versiones sin confirmacion explicita.
-- No proponer cambios de config basados en defaults genericos; contrastar con el stack y la estructura real del proyecto.
-
-## Flujo recomendado
-- [ ] Leer SSOT, stack real, archivos de configuracion y `package.json` existentes.
+- [ ] Leer configs, `package.json`, lockfile y estructura real del proyecto.
 - [ ] Inventariar configs relevantes segun el framework detectado y dependencias directas por uso esperado.
-- [ ] Contrastar paths, scripts, versiones y estructura real del proyecto.
-- [ ] Buscar imports reales, usos en configuracion y herramientas CLI antes de marcar paquetes como candidatos.
+- [ ] Ejecutar los checks de [configs.md](configs.md) para cada config presente.
+- [ ] Buscar imports reales + los 4 casos trampa antes de marcar cualquier paquete como candidato.
 - [ ] Detectar redundancias por proposito y decidir si son materialmente problematicas.
-- [ ] Revisar Tailwind, ESLint, TypeScript, framework, PostCSS y `.gitignore` cuando existan.
-- [ ] Proponer correcciones, eliminaciones o consolidaciones una a una, con validacion proporcional.
-- [ ] Reportar hallazgos por impacto: configs a corregir, paquetes usados, no encontrados, redundantes, riesgos y checks ejecutados o pendientes.
+- [ ] Ejecutar typecheck + build + lint (GATE OBLIGATORIO MUST).
+- [ ] Reportar hallazgos P1/P2/P3 con evidencia, validaciones ejecutadas/pendientes y riesgo residual.
 
-## Criterio de resultado bueno
-- La auditoria identifica configuraciones rotas, incompletas u obsoletas y dependencias muertas o redundantes con evidencia concreta.
-- Ninguna dependencia se marca como eliminable sin evidencia de busqueda y revision de excepciones (CLI tools, tipos, configs, imports dinamicos, transitivas).
-- Las recomendaciones distinguen paquetes muertos, herramientas CLI, tipos, configs y dependencias transitivas.
-- Las recomendaciones estan alineadas con el stack real y no con defaults genericos.
-- No propone cambios de arquitectura, testing o tooling fuera del alcance de configuracion y dependencias.
-- El cierre deja claro que corregir, que es opcional, que validaciones faltan y que riesgo residual queda.
+# Criterio de resultado bueno
 
-## Checklist rapido
-- [ ] Tailwind content paths correctos
-- [ ] ESLint sin reglas "off" innecesarias
-- [ ] TypeScript strict activado
-- [ ] Next.js metadata y CSP correctos
-- [ ] .gitignore completo
-- [ ] No secrets en configs
-- [ ] No paths hardcoded
-- [ ] Listar todas las dependencias de package.json
-- [ ] Grep por cada dependencia en src/ y configs
-- [ ] Verificar imports dinamicos (import(), require(variable))
-- [ ] Identificar dependencias no usadas
-- [ ] Identificar librerias redundantes (mismo proposito)
-- [ ] Eliminar una a una, verificar typecheck tras cada una
-- [ ] Build + typecheck + lint final
+Cierre valido cuando el gate de auto-cita de arriba se cumple con evidencia observable y el gate de segunda IA esta resuelto. Esta seccion no anade reglas: es el mirror declarativo del gate, repetido aqui solo porque `validate-hub-skills.ps1` exige el header.
+
+# Mejora proactiva de la skill
+
+Si un hallazgo corregido durante una auditoria revela una laguna reusable (nuevo caso trampa, patron de config no cubierto, nuevo anti-patron), actualizar [configs.md](configs.md) o este archivo. Proactividad solo para reglas reusables, no para hallazgos puntuales de un proyecto.
 
 ## Triggers
-- Keywords: auditar config, auditar dependencias, verificar configuracion, config correcta, tailwind config, eslint config, tsconfig, next config, paquetes sin usar, limpiar package.json, redundant libraries, unused packages, dependency audit, configuration audit, misconfiguration
-- Patrones de usuario: "audita la configuracion del proyecto y dime que esta mal", "el tailwind no funciona bien", "el lint no detecta nada", "revisa tsconfig", "audita las dependencias", "hay paquetes sin usar?", "limpiamos package.json", "por que tengo tantos paquetes?", "antes de subir revisa que no haya paquetes muertos"
-- Encadenamiento: despues de `arrancar-proyecto` o como validacion pre-publicacion; si la auditoria revela documentacion desalineada, coordinar con `documentar-con-criterio`
+- Keywords: auditar config, auditar dependencias, verificar configuracion, config correcta, tailwind config, eslint config, tsconfig, next config, paquetes sin usar, limpiar package.json, redundant libraries, unused packages, dependency audit, configuration audit, misconfiguration.
+- Patrones de usuario: "audita la configuracion del proyecto y dime que esta mal", "el tailwind no funciona bien", "el lint no detecta nada", "revisa tsconfig", "audita las dependencias", "hay paquetes sin usar?", "limpiamos package.json", "por que tengo tantos paquetes?", "antes de subir revisa que no haya paquetes muertos".
+- Encadenamiento: despues de `arrancar-proyecto` o como validacion pre-publicacion; antes de `validar-calidad` y @qa-validador cuando toque cambios que se van a publicar; si la auditoria revela documentacion desalineada, coordinar con `documentar-con-criterio`; si detecta secrets, escalar a @especialista-seguridad.
 
-## Ejemplos de activacion
+# Ejemplos de activacion
 - "Audita la configuracion del proyecto y dime que esta mal."
 - "El Tailwind no detecta todas las clases, revisa el config."
-- "Antes de publicar, verifica que las configs estan bien."
-- "Audita las dependencias del proyecto y elimina las que no se usan."
-- "Tengo 70 dependencias en package.json, muchas no se usan."
-- "Antes de subir, revisa que no haya paquetes muertos."
+- "Antes de publicar, verifica que las configs estan bien y no hay paquetes muertos."
+- "Audita las dependencias del proyecto y dime cuales sobran (sin tocar nada)."

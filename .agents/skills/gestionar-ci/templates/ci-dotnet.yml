@@ -1,0 +1,38 @@
+# Plantilla minima de CI para proyectos .NET.
+# Punto de partida: adapta versiones, secretos y matriz a tu realidad concreta.
+# Doc oficial: https://github.com/actions/setup-dotnet
+# Versiones estables a jun-2026: actions/checkout@v7, setup-dotnet@v5.
+name: ci-dotnet
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x   # ajustar a 9.0.x / 10.0.x segun global.json
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test --no-build --configuration Release --logger trx --collect:"XPlat Code Coverage"
+
+      # Paso opcional para proyectos con EF Core.
+      # Define el secret CONNECTION_STRING en Settings -> Secrets and variables -> Actions.
+      # - name: Apply migrations
+      #   run: dotnet ef database update --no-build
+      #   env:
+      #     CONNECTION_STRING: ${{ secrets.CONNECTION_STRING }}

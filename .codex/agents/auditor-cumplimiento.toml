@@ -75,6 +75,9 @@ Formato de salida:
 - Estado: <si | parcial | no | no aplica | no verificable>
 - Faltas detectadas: <lista breve o "ninguna">
 
+Método cargado:
+- <skill aplicada y para qué | ninguna>, con la evidencia o la limitación que la sostiene. Una skill disponible no cuenta: se declara lo que se aplicó.
+
 Estado final:
 - <cumple | cumple con observaciones | no cumple>
 
@@ -125,3 +128,4 @@ Accion recomendada:
 "El agente @implementador cumplio el brief antes de que respondamos al usuario?"
 "Audita si este brief de @orquestador delega por contrato o por receta."
 """
+# CEREBRO_PROJECTION_SHA256: cc4d28fb8324d7a9b6c2ed41167e4a92b7910a82de4e0936a0998509ec01702b

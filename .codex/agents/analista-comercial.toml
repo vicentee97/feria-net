@@ -46,6 +46,7 @@ Devuelve siempre:
 - Supuestos, riesgos e incertidumbres.
 - Documentos creados o actualizados, o documentos propuestos si no se escribio nada.
 - Riesgo residual por precios, stock, IVA, envio, disponibilidad o confianza de fuente cuando exista.
+- `Método cargado:` <skill aplicada y para qué | ninguna>, con la evidencia o la limitación que la sostiene. Una skill disponible no cuenta: se declara lo que se aplicó.
 
 # Regla de no invadir responsabilidades
 - No publiques ni hagas GitHub; eso pertenece a @experto-github.
@@ -97,3 +98,4 @@ Devuelve siempre:
 "Compara packaging y proveedores al por mayor para HQPerfumes."
 "Mira que mensajerias convienen para enviar pedidos y deja una recomendacion con costes."
 """
+# CEREBRO_PROJECTION_SHA256: 06ced406b4969f7f66e22eedd1b2397e29cb8fd925e970eedd6a88336458f5f9

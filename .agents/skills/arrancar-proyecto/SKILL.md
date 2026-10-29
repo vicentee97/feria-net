@@ -1,61 +1,44 @@
 ---
 name: arrancar-proyecto
-description: "Crea el bootstrap canonico de un repositorio nuevo o incompleto: estructura base, docs iniciales, plantillas operativas y preparacion para empezar a trabajar sin improvisar. TRIGGERS: nuevo proyecto, bootstrap, iniciar repo, estructura base, arrancar, crear proyecto, primera configuracion."
+description: "Usar al iniciar un repositorio nuevo, despues de un bootstrap fallido o cuando el proyecto aun no tiene estructura base, docs operativos ni plantillas para empezar a trabajar sin improvisar. TRIGGERS: nuevo proyecto, bootstrap, iniciar repo, estructura base, arrancar, crear proyecto, primera configuracion."
 ---
 
+# Arrancar proyecto
+
 # Objetivo
-Arrancar un repositorio nuevo con una base operativa mínima, clara y reutilizable desde el día 1.
 
-Esta skill debe dejar preparado el marco de trabajo general del proyecto: estructura, documentación canónica, plantillas de seguimiento y preparación inicial para el flujo de Git/GitHub, sin generar código de aplicación ni asumir lógica de negocio.
+Arrancar un repositorio nuevo con una base operativa minima, clara y reutilizable desde el dia 1: estructura, documentacion canonica, plantillas de seguimiento y preparacion inicial para el flujo de Git/GitHub, sin generar codigo de aplicacion ni asumir logica de negocio.
 
-# Alcance y límites
+# Anti-patrones y su correccion
+
+Cada sesgo fuerte del entrenamiento base necesita su par MAL -> BIEN -> EJEMPLO. Reconocer el anti-patron no basta para vencerlo.
+
+- **Crear todo por reflejo:** MAL generar `docs/SSOT.md`, `.teams/` y `.gitignore` sin inspeccionar primero el repo. BIEN detectar que ya existe y completar solo lo que falte. EJEMPLO un repo con `README.md` y `src/` -> respetarlos y anadir solo `docs/`, `.teams/` y `.gitignore`.
+- **Duplicar SSOT o plantillas:** MAL crear `docs/SSOT.md` cuando el proyecto ya tiene `README.md` como SSOT o una plantilla propia. BIEN respetar la variante equivalente y referenciarla. EJEMPLO si existe `docs/PROJECT.md` canonico, enlazarlo en vez de abrir un segundo SSOT.
+- **Gitignore agresivo:** MAL ignorar por defecto carpetas amplias (`dist/`, `build/`, `*.log`) que pueden ocultar archivos del proyecto. BIEN base general segura + ignorar stack solo con evidencia real del proyecto. EJEMPLO no ignorar `.next/` si el proyecto no usa Next.js.
+- **Normalizar .teams legacy por estilo:** MAL reescribir teams antiguos para adaptar formato o estados. BIEN tratar el historico como legacy; usar el contrato vigente solo para teams nuevos. EJEMPLO un `TEAM_003_...` con campo `Responsable` se respeta; un team nuevo usa `activo|cerrado|bloqueado`.
+- **Sembrar dev.bat sin stack:** MAL generar `.scripts/dev.bat` para cualquier proyecto. BIEN sembrar `dev.bat` solo si el stack detectado se beneficia de un menu; si no, omitir y registrar la decision en SSOT. EJEMPLO libreria npm de tipos -> omitir y anotar el motivo.
+
+# Alcance y limites
+
 - Aplica al minuto cero de proyectos nuevos o parcialmente inicializados.
-- Sí crea estructura y documentos base del proyecto.
-- Sí puede preparar `.gitignore` y dejar el terreno listo para Git.
-- No crea arquitectura específica de producto ni reglas de negocio.
-- No sustituye a `definir-reglas-proyecto`; la precede.
-- No sustituye a `configurar-github`; deja el repositorio listo para usar esa skill después.
-- No debe instalar dependencias ni generar código de aplicación salvo que el propio proyecto ya provea una plantilla explícita para ello.
+- Crea estructura y documentos base del proyecto; prepara `.gitignore` y deja el terreno listo para Git.
+- No crea arquitectura especifica de producto ni reglas de negocio; precede a `definir-reglas-proyecto`.
+- No sustituye a `configurar-github`; deja el repositorio listo para esa skill despues.
+- No instala dependencias ni genera codigo de aplicacion salvo plantilla explicita del proyecto.
 
 # Inputs / contexto obligatorio
-- [SSOT del repositorio](../docs/SSOT.md).
-- [Reglas globales compartidas](../docs/AI_GLOBAL_RULES.md).
-- [Skill transversal de documentación](../documentar-con-criterio/SKILL.md).
-- [Plantilla de SSOT de proyecto](../docs/PROJECT_SSOT_TEMPLATE.md).
-- Estructura real del repositorio, si ya existe algo.
-- Cualquier pista detectable del stack (`package.json`, `pyproject.toml`, `.sln`, `Dockerfile`, etc.) sin asumir tecnología no confirmada.
+
+- [SSOT del repositorio](../docs/SSOT.md) y [reglas globales](../docs/AI_GLOBAL_RULES.md).
+- [Skill transversal de documentacion](../documentar-con-criterio/SKILL.md) y [plantilla de SSOT de proyecto](../docs/PROJECT_SSOT_TEMPLATE.md).
+- Estructura real del repositorio (vacio o parcial).
+- Pistas detectables del stack (`package.json`, `pyproject.toml`, `.sln`, `Dockerfile`) sin asumir tecnologia no confirmada.
 
 # Comportamiento esperado
-Antes de crear nada, inspecciona si el repositorio está vacío o parcialmente inicializado.
 
-Si la skill debe crear o modificar muchos archivos, no intentes hacerlo en un único parche masivo: divide el trabajo por bloques temáticos y verifica el estado entre bloques.
+Inspeccionar primero; crear solo lo que falte. Si hay que tocar muchos archivos, dividir por bloques tematicos y verificar el estado entre bloques.
 
-La skill debe detectar si ya existen:
-- `docs/`
-- `docs/SSOT.md`
-- `docs/TODO.md` o `TODO.md`
-- `.teams/`
-- `.questions/`
-- `.gitignore`
-- `.git/`
-
-Después debe actuar con estos principios:
-
-1. Crear solo lo que falte o normalizar lo mínimo necesario.
-2. Usar `docs/` como hogar por defecto de la documentación específica del proyecto.
-3. Crear `docs/SSOT.md` a partir de la plantilla del hub si no existe una SSOT local explícita.
-4. Crear `docs/TODO.md` si falta una lista global equivalente, dejándolo como roadmap operativo vivo mínimo.
-5. Crear `.teams/`, `.teams/active/`, `.teams/archive/`, `.questions/`, `.teams/.counter` y `.teams/INDEX.md` si faltan.
-6. Crear `TEAM_TEMPLATE.md` y `QUESTION_TEMPLATE.md` si el proyecto no tiene una plantilla propia compatible con el contrato vigente del hub.
-7. Crear un `.gitignore` base prudente, transversal y seguro.
-8. Dejar constancia del arranque realizado en `.teams/active/` y cerrarlo/archivarlo si el bootstrap queda completado.
-9. Señalar el siguiente paso recomendado: completar la SSOT específica y, después, usar `definir-reglas-proyecto` y `configurar-github` cuando aplique.
-10. Sembrar `dev.bat` aplicando `generar-bat-interactivo` si el stack detectado lo justifica. Documentar la omision en SSOT si no aplica.
-
-La base documental inicial debe ser mínima, canónica y sin ruido: aplicar `documentar-con-criterio` antes de añadir detalle que aún no aporte valor operativo real.
-
-## Estructura base que debe dejar
-La estructura objetivo mínima es:
+La estructura objetivo minima es:
 
 ```text
 docs/
@@ -72,74 +55,57 @@ docs/
 .gitignore
 ```
 
-Si el proyecto ya tiene una variante equivalente, la IA debe respetarla y completar solo lo que falte.
+Principios operativos (aplicar `documentar-con-criterio` para no inflar la base inicial):
+
+1. `docs/` es el hogar por defecto de la documentacion especifica del proyecto.
+2. Crear `docs/SSOT.md` desde la plantilla del hub solo si no existe SSOT local explicita.
+3. Crear `docs/TODO.md` como roadmap operativo vivo minimo si falta lista global equivalente.
+4. Crear `.teams/` con `active/`, `archive/`, `.teams/.counter`, `.teams/INDEX.md` y plantillas `TEAM_TEMPLATE.md` / `QUESTION_TEMPLATE.md` si faltan.
+5. Crear `.gitignore` base prudente (ver anti-patron Gitignore agresivo).
+6. Dejar constancia del arranque en `.teams/active/` y archivarlo si el bootstrap queda completado.
+7. Sembrar `dev.bat` aplicando `generar-bat-interactivo` solo si el stack detectado lo justifica; si no, documentar la omision en SSOT.
+8. Señalar el siguiente paso: completar la SSOT especifica y despues usar `definir-reglas-proyecto` y `configurar-github`.
 
 ## Compatibilidad con `.teams` legacy
 
-Al arrancar o completar un proyecto antiguo:
-- si `.teams/` contiene teams planos, estados antiguos o campos retirados como `Responsable`, tratarlo como historico legacy;
-- no reescribir teams antiguos para adaptar estilo;
-- para teams nuevos usar siempre el contrato vigente del hub: `.teams/active/`, `.teams/archive/`, contador `.teams/.counter`, indice `.teams/INDEX.md` y estados `activo|cerrado|bloqueado`;
-- inicializar `.teams/.counter` con el ID mas alto existente, aunque los archivos antiguos usen 3 digitos;
-- solo corregir un team antiguo si se retoma exactamente ese hilo, contiene un error que induce a fallo operativo o bloquea una decision actual.
+- Si `.teams/` contiene teams planos, estados antiguos o campos retirados (`Responsable`), tratarlo como historico legacy; no reescribir por estilo.
+- Para teams nuevos usar el contrato vigente: `.teams/active/`, `.teams/archive/`, `.teams/.counter`, `.teams/INDEX.md` y estados `activo|cerrado|bloqueado`.
+- Inicializar `.teams/.counter` con el ID mas alto existente, aunque los archivos antiguos usen 3 digitos.
+- Solo corregir un team antiguo si se retoma ese hilo exacto, contiene un error que induce a fallo operativo o bloquea una decision actual.
 
-## Política de `.gitignore`
-La IA debe seguir estas reglas:
-- usar una base general y segura;
-- incluir archivos de sistema y editores comunes;
-- no inventar ignores específicos de stack sin evidencia real del proyecto;
-- si el stack está claramente detectado, ampliar el `.gitignore` de forma conservadora;
-- evitar reglas agresivas que puedan ocultar archivos importantes del proyecto por accidente.
+# Cierre OBLIGATORIO: gate de auto-cita
 
-## Relación con otras skills
-- `arrancar-proyecto` prepara el terreno del repositorio.
-- `gestionar-roadmap` entra después cuando haga falta dar forma, sanear o mantener vivo el roadmap.
-- `definir-reglas-proyecto` concreta rutas, comandos y reglas reales del proyecto una vez existe la base documental.
-- `configurar-github` se encarga del flujo de repositorio remoto, commits y publicación.
-- `ordenar-archivos` entra después si hay que refinar o reestructurar el árbol del proyecto.
-- Llama a `generar-bat-interactivo` para sembrar el punto de entrada de desarrollo del proyecto cuando el stack detectado lo justifique.
+Antes de declarar el arranque listo, declarar (auto-cita con evidencia, no auto-evaluacion). Maximo 7 items:
 
-## Ejemplos operativos
-### Repo vacío
-- Crear `docs/`, `docs/SSOT.md`, `docs/TODO.md`, `.teams/`, `.questions/` y `.gitignore`.
-- Registrar en `.teams/active/` que se ha realizado el bootstrap inicial y archivar el registro si queda completado.
-- Dejar como siguiente paso completar la SSOT del proyecto y sanear el roadmap con `gestionar-roadmap` si ya hay alcance suficiente.
-
-### Repo parcialmente iniciado
-- Detectar qué ya existe.
-- No duplicar SSOT, TODOs ni plantillas.
-- Completar únicamente los huecos necesarios para llegar a una base canónica mínima.
-
-### Repo con stack detectado pero sin documentación
-- Detectar la tecnología real.
-- Crear la base documental y operativa.
-- Ampliar `.gitignore` solo si la evidencia del stack lo justifica.
-- Dejar notas claras sobre los siguientes pasos de definición del proyecto.
+- [ ] **Declaro** que inspeccione el repo antes de crear nada (estructura, `docs/`, `.teams/`, `.gitignore`, stack detectable) y que no duplique archivos canonicos ya existentes.
+- [ ] **Declaro** que `docs/SSOT.md` existe o queda referenciado de forma explicita, y que la base documental es minima y sin ruido (aplique `documentar-con-criterio`).
+- [ ] **Declaro** que `.gitignore` es conservador: base general segura, ignora stack solo con evidencia real, no oculta archivos del proyecto.
+- [ ] **Declaro** que `.teams/` respeta el contrato vigente (`active/` + `archive/` + `.counter` + `INDEX.md` + plantillas) y que NO normalize el historico legacy por estilo.
+- [ ] **Declaro** que el arranque quedo registrado en `.teams/active/` (y archivado si el bootstrap se completo).
+- [ ] **Declaro** que la decision sobre `dev.bat` (sembrar u omitir) esta documentada con motivo.
+- [ ] **Declaro** que el handoff a `definir-reglas-proyecto` y `configurar-github` queda señalado como siguiente paso.
 
 # Flujo recomendado
-- [ ] Inspeccionar el repositorio.
-- [ ] Detectar qué estructura y documentos ya existen.
-- [ ] Identificar si hay stack detectable sin asumir tecnología no confirmada.
-- [ ] Crear o completar la estructura base y la documentación canónica.
+
+- [ ] Inspeccionar el repositorio y detectar estructura/documentos ya existentes.
+- [ ] Identificar stack detectable sin asumir tecnologia no confirmada.
+- [ ] Crear o completar solo lo que falte de la estructura base canonica.
 - [ ] Si hay `.teams` legacy, preparar `active/`, `archive/`, `.counter` e `INDEX.md` sin normalizar historico por estilo.
-- [ ] Crear o completar `.gitignore` con una base prudente.
+- [ ] Crear o completar `.gitignore` con base prudente.
 - [ ] Registrar el arranque en `.teams/active/` y archivar si procede.
-- [ ] Indicar el siguiente paso operativo recomendado.
+- [ ] Resolver el gate de auto-cita y señalar el siguiente paso operativo recomendado.
 
 # Criterio de resultado bueno
-La skill está bien aplicada si:
-- el repositorio queda listo para empezar a trabajar con una base operativa clara;
-- `docs/SSOT.md` existe o queda referenciado de forma explícita;
-- no se duplican archivos canónicos ya existentes;
-- `.gitignore` es útil y conservador;
-- queda claro que la parte específica del proyecto debe completarse después en `docs/`;
-- el handoff hacia `definir-reglas-proyecto` y `configurar-github` es evidente.
+
+Cierre valido cuando el gate de auto-cita de arriba se cumple con evidencia observable. Esta seccion no anade reglas: es el mirror declarativo del gate, repetido aqui solo porque `validate-hub-skills.ps1` exige el header.
 
 ## Triggers
-- Keywords: nuevo proyecto, bootstrap, iniciar repo, estructura base, arrancar, crear proyecto, primera configuracion
-- Patrones de usuario: "arranca este proyecto", "bootstrap inicial", "estructura base", "primeros pasos", "inicia el repo"
-- Encadenamiento: antes de `definir-reglas-proyecto` y `configurar-github`
 
-# Ejemplos de activación
-"Arranca este proyecto desde cero y déjalo listo para empezar a trabajar con estructura, SSOT y documentación base."
+- Keywords: nuevo proyecto, bootstrap, iniciar repo, estructura base, arrancar, crear proyecto, primera configuracion.
+- Patrones de usuario: "arranca este proyecto", "bootstrap inicial", "estructura base", "primeros pasos", "inicia el repo".
+- Encadenamiento: despues de `definir-producto` si la idea aun es difusa; antes de `definir-arquitectura` y `definir-reglas-proyecto`; llama a `generar-bat-interactivo` si el stack lo justifica; si el proyecto dockeriza, derivar a `estandarizar-docker-local`; `gestionar-roadmap` y `ordenar-archivos` entran despues si hace falta.
 
+# Ejemplos de activacion
+
+- "Arranca este proyecto desde cero y dejalo listo para empezar a trabajar con estructura, SSOT y documentacion base."
+- "Este repo ya tiene `src/` y `README.md`; completa la base operativa sin duplicar lo que ya funciona."

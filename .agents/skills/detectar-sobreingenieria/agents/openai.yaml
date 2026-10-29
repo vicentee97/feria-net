@@ -1,0 +1,7 @@
+interface:
+  display_name: "Detectar Sobreingeniería"
+  short_description: "Detecta complejidad innecesaria y propone la mínima"
+  default_prompt: "Usa $detectar-sobreingenieria para auditar esta solución y proponer la alternativa mínima suficiente."
+
+policy:
+  allow_implicit_invocation: true

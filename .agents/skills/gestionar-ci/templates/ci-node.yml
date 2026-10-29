@@ -1,0 +1,39 @@
+# Plantilla minima de CI para proyectos Node / TypeScript.
+# Punto de partida: adapta versiones, gestor de paquetes y matriz a tu realidad concreta.
+# Doc oficial: https://github.com/actions/setup-node
+# Versiones estables a jun-2026: actions/checkout@v7, setup-node@v6.
+# Nota: setup-node@v6 requiere Actions Runner >= 2.327.1 (Node 24 runtime).
+name: ci-node
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20.x   # cambiar a 22.x o leer de .nvmrc
+          cache: 'npm'          # cambiar a 'pnpm' o 'yarn' segun el lockfile
+
+      - name: Install
+        run: npm ci   # o 'pnpm install --frozen-lockfile' / 'yarn install --frozen-lockfile' / 'bun install --frozen-lockfile'
+
+      - name: Lint
+        run: npm run lint   # quitar si el proyecto no usa linter
+
+      - name: Typecheck
+        run: npm run typecheck   # quitar si el proyecto no usa TypeScript
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test -- --ci --coverage

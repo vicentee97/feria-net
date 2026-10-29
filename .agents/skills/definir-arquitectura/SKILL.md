@@ -1,172 +1,135 @@
 ---
 name: definir-arquitectura
-description: "Analiza el contexto real de un proyecto para proponer y documentar una arquitectura tecnica solida: modulos, capas, stack, limites, versiones y decisiones de alto impacto. TRIGGERS: arquitectura, stack, capas, modulos, decisiones tecnicas, estructura tecnica, que framework."
+description: "Usar cuando haya que decidir stack, modulos, capas, limites, versiones o cualquier arquitectura dificil de revertir, y necesites analizar el contexto real del proyecto antes de proponer y documentar la opcion. TRIGGERS: arquitectura, stack, capas, modulos, decisiones tecnicas, estructura tecnica, que framework."
 ---
 
+# Definir Arquitectura
+
 # Objetivo
-Convertir el contexto real de una aplicación en una arquitectura técnica explícita, defendible y documentada.
 
-La skill debe analizar el producto, las restricciones, la madurez del proyecto, el stack detectable y las necesidades no funcionales para recomendar la mejor arquitectura posible, documentarla en `docs/SSOT.md` y crear ADRs solo cuando existan decisiones importantes o difíciles de revertir.
+Convertir el contexto real de una aplicacion en una arquitectura tecnica explicita, defendible y documentada.
 
-# Alcance y límites
-- Sí define estructura técnica, módulos, límites entre capas, patrones, integraciones y criterios de selección tecnológica.
-- Sí puede recomendar stack, runtime, framework, base de datos, estrategia de estado o despliegue si el contexto lo requiere.
-- Sí debe orientar la elección de versiones hacia opciones estables recientes.
-- No implementa código ni instala dependencias.
-- No reemplaza la documentación funcional del dominio.
-- No sustituye a `arrancar-proyecto`; se apoya en la base que esa skill deja preparada.
-- No sustituye a `definir-reglas-proyecto`; esa skill concreta rutas, comandos y operativa una vez fijada la arquitectura.
-- No sustituye a futuras skills de testing, entorno u observabilidad, aunque debe dejar claras sus necesidades de integración.
+La skill analiza el producto, las restricciones, la madurez del proyecto, el stack detectable y las necesidades no funcionales para recomendar la mejor arquitectura, documentarla en `docs/SSOT.md` y crear ADRs solo cuando existan decisiones importantes o dificiles de revertir.
+
+La accion dominante es **proponer arquitectura dificil de revertir solo tras inspeccionar el contexto real**, no a partir de defaults de memoria.
+
+# Anti-patrones y su correccion
+
+Cada sesgo fuerte del entrenamiento base necesita su par MAL -> BIEN -> EJEMPLO.
+
+- **Sobrearquitectura:** MAL montar microservicios, colas, mensajeria o multi-tenant para un CRUD interno de poco trafico. BIEN favorecer simplicidad y modular monolith mientras no haya una necesidad real. EJEMPLO un panel admin interno queda en monolito modular Next.js + Postgres; separar servicios llega cuando el dominio o la escala lo justifiquen, no antes.
+- **Diseno fragil por moda:** MAL elegir stack por "lo que se lleva" o por preferencia del modelo sin cruzar restricciones de equipo, coste o despliegue. BIEN justificar cada decision con el contexto real del proyecto. EJEMPLO "elijo edge runtime porque el equipo conoce X y el despliegue es Y", no "porque edge es moderno".
+- **Reescritura arbitraria:** MAL tirar lo existente defendible porque encaja mal con la idea nueva. BIEN respetar lo que ya funciona y proponer una ruta de enderezamiento progresiva. EJEMPLO un proyecto a medio arrancar conserva su capa de datos si es defendible y se introducen limites claros en lugar de reescribir desde cero.
+- **Latest sin estable:** MAL apostar por versiones bleeding-edge o beta sin asentar para un stack base. BIEN preferir versiones estables recientes; ante tension `latest` vs `estable`, priorizar estabilidad razonable. EJEMPLO para framework base elegir la estable mas reciente con soporte a largo plazo, no la RC.
+- **Documentacion inflada:** MAL crear ADRs por defecto para cada decision menor o duplicar la SSOT en documentos paralelos. BIEN ADRs solo para decisiones costosas de revertir, y aplicar `documentar-con-criterio` antes de añadir detalle. EJEMPLO un cambio de `content` de Tailwind no genera ADR; la eleccion monolito vs servicios si.
+
+# Alcance y limites
+
+- Define estructura tecnica, modulos, limites entre capas, patrones, integraciones y criterios de seleccion tecnologica.
+- Puede recomendar stack, runtime, framework, base de datos, estrategia de estado o despliegue si el contexto lo requiere.
+- Orienta la eleccion de versiones hacia opciones estables recientes.
+- No implementa codigo ni instala dependencias; no reemplaza la documentacion funcional del dominio.
+- No sustituye a `arrancar-proyecto` (prepara el repo), `definir-reglas-proyecto` (concreta rutas/comandos/operativa) ni futuras skills de testing, entorno u observabilidad (deja claras sus necesidades de integracion).
 
 # Inputs / contexto obligatorio
+
 - [SSOT del repositorio](../docs/SSOT.md).
 - [Reglas globales compartidas](../docs/AI_GLOBAL_RULES.md).
-- [Skill transversal de documentación](../documentar-con-criterio/SKILL.md).
+- [Skill transversal de documentacion](../documentar-con-criterio/SKILL.md).
 - [Plantilla de SSOT de proyecto](../docs/PROJECT_SSOT_TEMPLATE.md).
-- Estructura real del repositorio.
-- Documentación existente del proyecto.
-- Stack detectable en archivos y configuración.
+- Estructura real del repositorio y documentacion existente.
+- Stack detectable en archivos y configuracion.
 - Requisitos funcionales y no funcionales conocidos.
-- Acceso a documentación técnica actualizada cuando esté disponible, preferentemente vía Context7.
+- Documentacion tecnica vigente cuando este disponible (preferentemente via Context7 si esta configurado; si no, documentacion oficial directa y dejar el fallback declarado).
 
 # Comportamiento esperado
-La skill debe empezar inspeccionando el repositorio y la documentación existente antes de proponer ninguna arquitectura.
 
-Después debe resolver, como mínimo, estas preguntas:
-- Qué tipo de aplicación es realmente.
-- Qué restricciones técnicas, de equipo, tiempo, coste o despliegue existen.
-- Qué partes del sistema necesitan escalar, aislarse o mantenerse simples.
-- Qué tecnología ya existe y merece respetarse.
-- Qué decisiones son estructurales y cuáles pueden aplazarse.
+La skill empieza inspeccionando el repositorio y la documentacion antes de proponer nada. Despues resuelve, como minimo: tipo real de aplicacion, restricciones (tecnicas, equipo, tiempo, coste, despliegue), partes que necesitan escalar o aislarse, tecnologia ya existente digna de respeto, y que decisiones son estructurales frente a aplazables.
 
-## Flujo de análisis por capas
-1. Inspeccionar el repo y la documentación disponible.
-2. Identificar el tipo de aplicación, superficie técnica y restricciones.
-3. Detectar si el proyecto es frontend puro, full-stack, backend API, monolito, modular monolith, microservicios u otra variante razonable.
-4. Analizar necesidades de escalabilidad, mantenibilidad, despliegue, coste, velocidad de iteración, SEO, tiempo real, autenticación, integraciones y carga operativa.
-5. Proponer 2-3 opciones viables cuando la decisión no sea obvia.
+## Flujo de analisis por capas
+1. Inspeccionar repo y documentacion disponible.
+2. Identificar tipo de aplicacion, superficie tecnica y restricciones.
+3. Detectar variante real (frontend puro, full-stack, backend API, monolito, modular monolith, microservicios u otra).
+4. Analizar escalabilidad, mantenibilidad, despliegue, coste, velocidad de iteracion, SEO, tiempo real, auth, integraciones y carga operativa.
+5. Proponer 2-3 opciones viables cuando la decision no sea obvia.
 6. Recomendar una arquitectura y justificarla con pros, contras y riesgos.
-7. Documentar la decisión final en `docs/SSOT.md`.
-8. Crear ADRs solo para decisiones importantes o difíciles de revertir.
+7. Documentar la decision final en `docs/SSOT.md`.
+8. Crear ADRs solo para decisiones importantes o dificiles de revertir.
 
-## Política de versiones y documentación
-La skill debe seguir estas reglas:
-- revisar documentación oficial y fuentes primarias del stack candidato cuando la decisión dependa de versiones, breaking changes o recomendaciones actuales;
-- cuando haya acceso disponible, usar Context7 como fuente preferente para consultar documentación técnica actualizada;
-- si Context7 no está disponible, continuar con documentación oficial directa o fuentes primarias equivalentes;
-- preferir versiones estables recientes;
-- evitar tecnologías o versiones demasiado nuevas si todavía no están asentadas;
-- si hay tensión entre `latest` y `estable`, priorizar estabilidad razonable sin quedarse claramente atrás;
-- documentar la versión elegida y el criterio de selección cuando esa elección impacte la arquitectura.
+## Politica de versiones y documentacion
+- Revisar documentacion oficial y fuentes primarias del stack candidato cuando la decision dependa de versiones, breaking changes o recomendaciones actuales.
+- Si Context7 esta disponible, usarlo como fuente preferente; si no, continuar con documentacion oficial y dejar el fallback declarado. Si el proyecto quiere apoyarse de forma estable en ese MCP, derivar a `configurar-mcp` en lugar de asumir que existe.
+- Preferir versiones estables recientes; evitar tecnologias demasiado nuevas sin asentar.
+- Documentar la version elegida y el criterio de seleccion cuando esa eleccion impacte la arquitectura.
 
-## Nota sobre Context7
-La skill debe asumir que puede existir acceso futuro al servidor MCP de Context7.
-
-Si está disponible, debe usarse para validar:
-- frameworks;
-- runtimes;
-- librerías clave;
-- breaking changes;
-- recomendaciones vigentes de arquitectura o integración.
-
-Si todavía no está configurado, la skill no debe bloquearse: debe continuar con documentación oficial y dejar claro ese fallback.
-Si el proyecto, la tarea o la sesión quieren apoyarse de forma estable en ese MCP, debe indicar el hueco y derivar a `configurar-mcp` en lugar de asumir que ya existe.
-
-## Decisiones arquitectónicas mínimas que debe cubrir
-- Tipo de sistema y topología general.
-- Estructura por módulos, features o capas.
-- Separación entre dominio, aplicación, infraestructura y UI cuando aplique.
+## Decisiones arquitectonicas minimas que debe cubrir
+- Tipo de sistema y topologia general.
+- Estructura por modulos, features o capas; separacion dominio/aplicacion/infraestructura/UI cuando aplique.
 - Estrategia de datos y persistencia a alto nivel.
-- Estrategia de integraciones externas.
-- Patrón de estado y flujo de datos.
-- Autenticación y autorización a alto nivel si aplica.
+- Estrategia de integraciones externas y patron de estado/flujo de datos.
+- Autenticacion y autorizacion a alto nivel si aplica.
 - Estrategia de despliegue y entornos a nivel conceptual.
-- Límites de responsabilidad entre carpetas, módulos o servicios.
+- Limites de responsabilidad entre carpetas, modulos o servicios.
 - Anti-patrones a evitar en ese proyecto.
 
-## Formato de salida
-La salida principal debe vivir en `docs/SSOT.md`, normalmente dentro de la sección de arquitectura.
+## Formato de salida y ADR
+La salida principal vive en `docs/SSOT.md`, normalmente en la seccion de arquitectura. La skill puede crear `docs/adr/` solo cuando una decision merezca trazabilidad separada. Antes de añadir ADRs o documentos complementarios, aplicar `documentar-con-criterio` para comprobar que el detalle extra cambia decisiones reales y no duplica la SSOT.
 
-La skill puede crear `docs/adr/` solo cuando una decisión merezca trazabilidad separada. No debe generar documentación excesiva por defecto.
+Crea un ADR cuando exista una decision costosa de revertir: framework base, monolito vs servicios, patron de datos critico, frontera cliente/servidor, colas/mensajeria/caching/multi-tenant u otra con impacto estructural prolongado.
 
-Antes de añadir ADRs o documentos complementarios, debe aplicar `documentar-con-criterio` para comprobar que el detalle extra cambia decisiones reales y no duplica la SSOT.
+## Preguntas que debe resolver antes de cerrar
+Quien usa el sistema, nivel de trafico esperado, criticidad del dato, velocidad de entrega frente a robustez, restricciones de hosting/equipo/coste, integraciones externas y tiempo real, y necesidad de SSR, SEO, offline, multitenancy o escalado independiente. Si una de estas no puede inferirse y afecta a una eleccion dificil de revertir, se eleva como pregunta importante **solo si se cumplen a la vez las tres condiciones de la Regla 0.1** (accion irreversible o destructiva, el dueno sabe algo que no se puede inferir del proyecto, y la respuesta cambia el objetivo). En los demas casos se elige la opcion mas defendible con la evidencia disponible, se declara la hipotesis en `docs/SSOT.md` y la arquitectura se cierra igual.
 
-## Cuándo crear ADR
-Crea un ADR cuando exista una decisión:
-- costosa de revertir;
-- sobre framework base;
-- sobre monolito vs servicios;
-- sobre patrón de datos crítico;
-- sobre frontera cliente/servidor;
-- sobre colas, mensajería, caching o multi-tenant;
-- o cualquier otra con impacto estructural prolongado.
+## Ejemplos orientativos
+- **CRUD interno poco trafico:** simplicidad + modular monolith + baja carga; evitar microservicios.
+- **SaaS con panel y auth:** limites claros frontend/backend/auth/datos/billing; modularidad y despliegue razonable.
+- **Frontend + backend separado:** frontera cliente-servidor, contratos, estado e integracion; evitar duplicar logica entre lados.
+- **MVP con IA e integraciones:** aislar integraciones, gestion de errores y puntos de fallo externos; nucleo de dominio protegido.
+- **Proyecto a medio arrancar:** respetar lo defendible; ruta de enderezamiento progresivo, no reescritura arbitraria.
 
-## Relación con otras skills
-- `arrancar-proyecto` prepara el repositorio.
-- `definir-arquitectura` fija la estructura técnica.
-- `documentar-con-criterio` marca cuánto detalle arquitectónico merece vivir en la SSOT y cuándo conviene un ADR separado.
-- `definir-reglas-proyecto` concreta rutas, comandos y operativa sobre esa arquitectura.
-- `configurar-github` se encarga del flujo del repositorio y la publicación.
-- `elevar-ui-frontend` aplica después sobre la capa UI cuando exista interfaz.
+## Relacion con otras skills
+`arrancar-proyecto` prepara el repo; `definir-arquitectura` fija la estructura tecnica; `documentar-con-criterio` marca cuanto detalle merece la SSOT y cuando conviene un ADR; `definir-reglas-proyecto` concreta rutas, comandos y operativa; `configurar-github` gestiona el flujo del repositorio; `elevar-ui-frontend` aplica despues sobre la capa UI cuando exista interfaz.
 
-## Ejemplos operativos
-### App web CRUD interna con poco tráfico
-- Favorecer simplicidad, modular monolith y baja carga operativa.
-- Evitar microservicios o separación prematura.
+# Cierre OBLIGATORIO: gate de auto-cita
 
-### SaaS con panel y autenticación
-- Definir límites claros entre frontend, backend, auth, datos y billing si aplica.
-- Priorizar mantenibilidad, separación modular y despliegue razonable.
+Antes de declarar la arquitectura propuesta como lista, declarar (auto-cita con evidencia, no auto-evaluacion). Maximo 7 items:
 
-### Frontend con backend separado
-- Definir frontera cliente-servidor, contratos, estado y estrategia de integración.
-- Evitar duplicar lógica entre ambos lados.
+- [ ] **Declaro** que inspeccione el repositorio, la SSOT y la documentacion existente antes de proponer, y que detecte el stack y la madurez real (no defaults de memoria).
+- [ ] **Declaro** que evite cada anti-patron de arriba (sobrearquitectura, diseno fragil por moda, reescritura arbitraria, latest sin estable, documentacion inflada), citando cual aplicaba a este caso concreto.
+- [ ] **Declaro** que, cuando hubo eleccion tecnica, contraste fuentes primarias o documentacion oficial vigente y documente la version elegida con criterio.
+- [ ] **Declaro** que deje claros los limites entre modulos, capas o servicios y los anti-patrones a evitar en el proyecto.
+- [ ] **Declaro** que documente la decision en `docs/SSOT.md` sin inflar y que cree ADRs solo para decisiones costosas de revertir.
+- [ ] **Declaro** que eleve como pregunta importante solo las decisiones no inferibles que superen el filtro acumulativo de la Regla 0.1, y que para el resto decida con evidencia, declare la hipotesis en `docs/SSOT.md` y no lo cierre por inercia.
+- [ ] **Declaro** el resultado del gate de segunda IA (ver abajo).
 
-### MVP con IA e integraciones externas
-- Aislar integraciones, gestión de errores y puntos de fallo externos.
-- Mantener el núcleo del dominio protegido del ruido de proveedores.
+## Gate de segunda IA (OBLIGATORIO, no sugerencia)
 
-### Proyecto parcialmente iniciado que necesita ordenar su arquitectura
-- Respetar lo que ya existe cuando sea defendible.
-- Evitar reescrituras arbitrarias.
-- Proponer una ruta de enderezamiento progresiva.
+El agente que propone arquitectura no es el que la califica. La arquitectura es lo mas dificil de revertir del proyecto:
 
-## Preguntas importantes que debe resolver
-Antes de fijar la arquitectura, la skill debe intentar responder:
-- quién usa el sistema;
-- nivel de tráfico esperado;
-- criticidad del dato;
-- velocidad de entrega frente a robustez;
-- restricciones de hosting, equipo o coste;
-- integraciones externas y requisitos de tiempo real;
-- necesidad de SSR, SEO, offline, multitenancy o escalado independiente.
-
-Si una de estas decisiones no puede inferirse y afecta a una elección difícil de revertir, la skill debe elevarla como pregunta importante antes de cerrar la arquitectura.
+- Si la propuesta **fija framework base, topologia (monolito vs servicios), patron de datos critico o frontera cliente/servidor** -> escalar OBLIGATORIAMENTE a **@arquitecto** (si no es el que la carga) y delegar a **@revisor** para revision de riesgo antes de entregar la decision al usuario o de implementar.
+- Si la propuesta **toca auth, permisos, secretos, RLS o datos sensibles** -> escalar OBLIGATORIAMENTE a **@especialista-seguridad**.
+- Si la propuesta es una **mejora local sin frontera estructural** -> sin segunda IA obligatoria (no burocracia innecesaria).
 
 # Flujo recomendado
-- [ ] Inspeccionar repositorio, SSOT y documentación existente.
+
+- [ ] Inspeccionar repositorio, SSOT y documentacion existente.
 - [ ] Detectar stack, restricciones y madurez real del proyecto.
-- [ ] Identificar decisiones arquitectónicas importantes y separarlas de las menores.
-- [ ] Consultar documentación oficial y, si está disponible, Context7 para versiones y recomendaciones vigentes.
-- [ ] Comparar alternativas cuando la decisión no sea obvia.
-- [ ] Recomendar una arquitectura con justificación clara.
-- [ ] Documentar la decisión en `docs/SSOT.md`.
-- [ ] Crear ADRs solo para decisiones estructurales de alto impacto.
+- [ ] Identificar decisiones arquitectonicas importantes y separarlas de las menores.
+- [ ] Consultar documentacion oficial y, si esta disponible, Context7 para versiones y recomendaciones vigentes.
+- [ ] Comparar alternativas cuando la decision no sea obvia.
+- [ ] Recomendar una arquitectura con justificacion clara.
+- [ ] Documentar la decision en `docs/SSOT.md`; ADRs solo para decisiones estructurales de alto impacto.
+- [ ] Resolver el gate de auto-cita y el gate de segunda IA.
 
 # Criterio de resultado bueno
-La skill está bien aplicada si:
-- la arquitectura propuesta encaja con el contexto real del producto;
-- evita tanto la sobrearquitectura como el diseño frágil;
-- usa criterios actuales y razonables de versiones y documentación;
-- deja claras las fronteras entre módulos, capas o servicios;
-- documenta en `docs/SSOT.md` lo importante sin inflar la documentación;
-- y crea ADRs solo cuando la decisión lo justifica de verdad.
+
+Cierre valido cuando el gate de auto-cita de arriba se cumple con evidencia observable y el gate de segunda IA esta resuelto segun la tipificacion. Esta seccion no anade reglas: es el mirror declarativo del gate, repetido aqui solo porque `validate-hub-skills.ps1` exige el header. La senal observable es que la arquitectura encaja con el contexto real, evita sobrearquitectura y diseno fragil, deja claras las fronteras y las decisiones dificiles de revertir pasaron por @arquitecto/@revisor.
 
 ## Triggers
 - Keywords: arquitectura, stack, capas, modulos, decisiones tecnicas, estructura tecnica, que framework
 - Patrones de usuario: "define la arquitectura", "que stack usar", "como organizar los modulos", "proponte una arquitectura"
-- Encadenamiento: despues de `definir-producto`, antes de `configurar-entorno` y `definir-reglas-proyecto`
+- Encadenamiento: despues de `definir-producto` y `arrancar-proyecto`; antes de `configurar-entorno` y `definir-reglas-proyecto`; hermana de `actuar-como-senior` (decision justificada) y `documentar-con-criterio` (cuanto documentar).
 
-# Ejemplos de activación
-"Define la arquitectura de este proyecto según su contexto real, proponiendo la mejor opción y documentándola con criterio actual."
-
+# Ejemplos de activacion
+- "Define la arquitectura de este proyecto segun su contexto real, proponiendo la mejor opcion y documentandola con criterio actual."
+- "Tenemos un SaaS con panel y auth: como organizo modulos y capas sin sobrearquitectura."

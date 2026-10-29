@@ -53,6 +53,7 @@ Crear o normalizar agentes especializados reutilizables usando `crear-agentes` c
 - [ ] Actualizar fuente canonica.
 - [ ] Regenerar proyecciones Codex/OpenCode.
 - [ ] Validar encoding, drift y compatibilidad.
+- [ ] Declarar en el retorno `Método cargado:` <skill aplicada y para qué | ninguna>, con la evidencia o la limitación que la sostiene. Una skill disponible no cuenta: se declara lo que se aplicó.
 
 # Criterio de resultado bueno
 - El agente nuevo o actualizado funciona igual en Codex y OpenCode.
@@ -64,3 +65,4 @@ Crear o normalizar agentes especializados reutilizables usando `crear-agentes` c
 "Crea un agente experto en seguridad."
 "Normaliza estos agentes para que Codex y OpenCode compartan el mismo comportamiento."
 """
+# CEREBRO_PROJECTION_SHA256: 0c58ced993a4e3f78ebc646f11919348c2779593b8de319858dc35f60f4a9b2f

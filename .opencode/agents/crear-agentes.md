@@ -1,10 +1,6 @@
 ---
 description: "Crear agentes, normalizar agentes, formato Codex oficial, prompts espejo entre Codex y OpenCode y source of truth unica."
 mode: subagent
-permission:
-  edit: allow
-  webfetch: allow
-  bash: allow
 ---
 
 <!-- AUTO-GENERADO: Editar scripts/agent-prompts.json y ejecutar globalize.ps1. No editar este archivo directamente. -->
@@ -58,6 +54,7 @@ Crear o normalizar agentes especializados reutilizables usando `crear-agentes` c
 - [ ] Actualizar fuente canonica.
 - [ ] Regenerar proyecciones Codex/OpenCode.
 - [ ] Validar encoding, drift y compatibilidad.
+- [ ] Declarar en el retorno `Método cargado:` <skill aplicada y para qué | ninguna>, con la evidencia o la limitación que la sostiene. Una skill disponible no cuenta: se declara lo que se aplicó.
 
 # Criterio de resultado bueno
 - El agente nuevo o actualizado funciona igual en Codex y OpenCode.
@@ -68,3 +65,4 @@ Crear o normalizar agentes especializados reutilizables usando `crear-agentes` c
 # Ejemplos de activacion
 "Crea un agente experto en seguridad."
 "Normaliza estos agentes para que Codex y OpenCode compartan el mismo comportamiento."
+<!-- CEREBRO_PROJECTION_SHA256: 8d01c7e25c99e60770c570e64aaec015afdfaa9a359249b65ee3c2114d90130c -->

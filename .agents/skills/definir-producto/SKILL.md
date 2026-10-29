@@ -1,169 +1,96 @@
 ---
 name: definir-producto
-description: "Clarifica y documenta que producto se esta construyendo antes de hablar de arquitectura o implementacion, especialmente cuando la idea funcional aun es difusa o incompleta. TRIGGERS: producto, que construimos, idea, definir el producto, vision, alcance funcional, modulo nuevo."
+description: "Usar al arrancar un modulo o producto nuevo cuando la idea aun es difusa o incompleta, para clarificar y documentar alcance, vision y modulos antes de hablar de arquitectura o implementacion. TRIGGERS: producto, que construimos, idea, definir el producto, vision, alcance funcional, modulo nuevo."
 ---
 
+# Definir producto
+
 # Objetivo
-Convertir una idea difusa, un menú nuevo o un producto mal encuadrado en una definición funcional explícita, defendible y documentada.
 
-La skill debe fijar primero **qué producto es**, **para qué sirve**, **cómo se agrupan sus capacidades** y **cuál es la fase correcta** antes de permitir que la IA baje a arquitectura, reglas o código.
+Convertir una idea difusa, un menu nuevo o un producto mal encuadrado en una definicion funcional explicita, defendible y documentada. Fija primero **que producto es**, **para que sirve**, **como se agrupan sus capacidades** y **cual es la fase correcta** antes de permitir que la IA baje a arquitectura, reglas o codigo.
 
-# Alcance y límites
-- Sí define identidad de producto, problema real, usuario principal, capacidades, módulos, naming y fase actual.
-- Sí sirve tanto para proyectos nuevos como para reencuadrar productos ya empezados.
-- Sí aplica cuando se quiere abrir una nueva superficie o menú desde cero dentro de un producto existente.
-- Sí debe actualizar o crear documentación funcional canónica en `docs/`.
-- No define arquitectura técnica detallada.
-- No sustituye a `definir-arquitectura`; la precede.
-- No sustituye a `definir-reglas-proyecto`; la prepara.
-- No implementa código ni instala dependencias.
+# Anti-patrones y su correccion
+
+Cada sesgo fuerte del entrenamiento base necesita su par MAL -> BIEN -> EJEMPLO.
+
+- **Saltar a codigo con idea difusa:** MAL proponer stack, rutas o entidades cuando el producto aun es una lista de features sueltas. BIEN frenar y cerrar primero la definicion funcional en documentacion. EJEMPLO "quiero una app de tareas con login, notificaciones y panel" -> primero producto en una frase, usuario, problema y modulos; despues arquitectura.
+- **Feature puntual secuestrando el producto:** MAL dejar que una feature concreta se convierta por inercia en "el producto". BIEN separar vision global, fase actual y capacidades futuras. EJEMPLO "exportar PDF" no es el producto; es una capacidad de un modulo de informes.
+- **Naming mediocre de modulos:** MAL aceptar nombres provisionales ("Cosas", "Extras", "Modulo 2") como definitivos. BIEN cerrar naming canonico antes de mapear a codigo. EJEMPLO "Config" -> "Ajustes de cuenta"; mapear luego al nombre tecnico temporal si ya existe codigo.
+- **Menu nuevo como modulo por reflejo:** MAL convertir cualquier menu nuevo en un modulo. BIEN decidir si es modulo nuevo, flujo de un modulo existente, capacidad operativa o idea prematura. EJEMPLO "otro menu de reportes" -> flujo del modulo de informes, no modulo nuevo.
+- **Respuesta bonita sin documento:** MAL devolver una definicion de producto solo en el chat. BIEN materializar en `docs/SSOT.md` + `docs/product-map.md` + `docs/TODO.md`. EJEMPLO la vision queda en SSOT, no solo en la respuesta.
+
+# Alcance y limites
+
+- Define identidad de producto, problema real, usuario principal, capacidades, modulos, naming y fase actual.
+- Sirve para proyectos nuevos, reencuadre de productos empezados y apertura de superficies/menus nuevos.
+- Actualiza o crea documentacion funcional canonica en `docs/`.
+- No define arquitectura tecnica detallada; precede a `definir-arquitectura` y prepara a `definir-reglas-proyecto`.
+- No implementa codigo ni instala dependencias.
 
 # Inputs / contexto obligatorio
-- [SSOT del repositorio](../docs/SSOT.md).
-- [Reglas globales compartidas](../docs/AI_GLOBAL_RULES.md).
-- [Skill transversal de documentación](../documentar-con-criterio/SKILL.md).
-- [Plantilla de SSOT de proyecto](../docs/PROJECT_SSOT_TEMPLATE.md).
-- Documentación existente del proyecto, si la hay.
-- Estructura real del repositorio.
-- Prompt real del usuario o descripción disponible de la idea.
-- `.teams/`, `.questions/` y TODOs si el proyecto ya existe.
+
+- La documentacion canonica del proyecto (SSOT o equivalente), las reglas globales de la IA, la skill transversal `documentar-con-criterio` y, si existe, la plantilla de SSOT del proyecto.
+- Documentacion existente, estructura real del repositorio y prompt/descripcion de la idea del usuario.
+- La memoria de tareas, las dudas abiertas y el TODO del proyecto, si existen.
 
 # Comportamiento esperado
-La skill debe empezar inspeccionando el repositorio y la documentación existente antes de proponer estructura, módulos o fases.
 
-Debe resolver, como mínimo, estas preguntas:
-- qué es el producto en una frase;
-- qué problema real resuelve;
-- quién es el usuario principal;
-- qué capacidades actuales, iniciales y futuras existen;
-- qué parte es visión de producto y qué parte es fase/MVP;
-- cómo se agrupan las capacidades en módulos o áreas funcionales;
-- qué naming canónico conviene;
-- cómo se mapea ese naming con el código actual si ya existe implementación.
+Inspeccionar el repositorio y la documentacion existente antes de proponer estructura, modulos o fases. La skill es freno deliberado contra el impulso de bajar demasiado pronto a stack, rutas, entidades o codigo.
 
-## Contextos explícitos de uso
-### 1. Proyecto nuevo
-Cuando el proyecto nace sin una definición funcional cristalizada, la skill debe fijar primero producto, taxonomía y fase antes de arquitectura o implementación.
+## Contextos de uso
 
-### 2. Menú o área nueva
-Cuando se quiere abrir una nueva superficie dentro de un producto ya existente, la skill debe aclarar si eso es:
-- un módulo nuevo;
-- un flujo dentro de un módulo existente;
-- una capacidad operativa de un área ya existente;
-- o una idea todavía prematura que no debe convertirse aún en navegación o código.
+- **Proyecto nuevo:** el producto nace sin definicion funcional cristalizada; fijar primero producto, taxonomia y fase antes de arquitectura o implementacion.
+- **Menu o area nueva:** aclarar si es modulo nuevo, flujo de un modulo existente, capacidad operativa de un area existente o idea prematura que no debe convertirse aun en navegacion o codigo.
+- **Reencuadre:** cuando la documentacion actual no refleja lo que el producto quiere ser, corregir esa definicion antes de seguir acumulando decisiones tecnicas.
 
-### 3. Reencuadre de producto existente
-Cuando la documentación actual no refleja bien lo que el producto quiere ser, la skill debe priorizar corregir esa definición antes de seguir acumulando decisiones técnicas.
+## Preguntas que debe cerrar
 
-## Regla fuerte contra gatillos rápidos
-La skill debe actuar como freno deliberado contra el impulso de la IA a bajar demasiado pronto a stack, rutas, entidades o código.
+Producto en una frase; usuario principal; problema o necesidad real; capacidades actuales; capacidades iniciales; capacidades futuras; modulos o areas funcionales con buen naming; criterio de crecimiento para nuevas capacidades; fase activa real; mapeo entre naming canonico y naming tecnico temporal cuando ya existe codigo.
 
-No se debe saltar a arquitectura o implementación si:
-- la idea sigue expresada como lista de features sueltas;
-- los nombres de módulos son provisionales o mediocres;
-- una feature puntual se está convirtiendo por inercia en "el producto";
-- no está clara la diferencia entre visión global, fase actual y próximas capacidades.
+No bajar a arquitectura o implementacion si: la idea sigue como lista de features sueltas; los nombres son provisionales; una feature puntual se esta convirtiendo en "el producto"; no esta clara la diferencia entre vision global, fase actual y proximas capacidades.
 
-Si detecta ese estado, la skill debe detener la inercia y cerrar primero la definición funcional en documentación.
+## Outputs minimos
 
-## Preguntas de producto que debe cerrar
-Antes de terminar, la skill debe dejar respondido:
-- Producto en una frase.
-- Usuario principal.
-- Problema o necesidad real.
-- Capacidades actuales.
-- Capacidades iniciales.
-- Capacidades futuras.
-- Módulos o áreas funcionales con buen naming.
-- Criterio de crecimiento para nuevas capacidades.
-- Fase activa real.
-- Mapeo entre naming canónico y naming técnico temporal cuando ya exista código.
+- **El SSOT del proyecto (p. ej. `docs/SSOT.md`):** resumen del producto, fase activa, principios de producto, taxonomia canonica, criterio de crecimiento y mapeo con el codigo actual si aplica.
+- **El mapa de producto (p. ej. `docs/product-map.md`):** capacidades actuales, siguientes, ideas futuras agrupadas y criterio de entrada para nuevas automatizaciones o superficies.
+- **El TODO del proyecto (p. ej. `docs/TODO.md`):** definicion traducida a epicas o siguientes pasos alineados con el producto real, no tareas estrechas heredadas. Si el roadmap necesita saneado, dejarlo listo para el handoff a `gestionar-roadmap`.
 
-## Outputs mínimos obligatorios
-### `docs/SSOT.md`
-Debe dejar o actualizar, como mínimo:
-- resumen del producto;
-- fase activa;
-- principios de producto;
-- taxonomía canónica;
-- criterio de crecimiento;
-- mapeo con el código actual si aplica.
+Aplicar `documentar-con-criterio` para no inflar la documentacion funcional con historia, hipotesis obvias o detalle tecnico que no ayude a entender el producto.
 
-### `docs/product-map.md`
-Debe organizar:
-- capacidades actuales;
-- capacidades siguientes;
-- ideas futuras agrupadas;
-- criterio de entrada para nuevas automatizaciones o superficies.
+# Cierre OBLIGATORIO: gate de auto-cita
 
-### `docs/TODO.md`
-Debe traducir la definición de producto a épicas o siguientes pasos alineados con el producto real, no a tareas estrechas heredadas.
-Si el roadmap necesita saneado, priorización o partición posterior, la skill debe dejarlo listo para el handoff a `gestionar-roadmap`.
+Antes de cerrar la definicion de producto, declarar (auto-cita con evidencia, no auto-evaluacion). Maximo 7 items:
 
-## Relación con otras skills
-Orden recomendado cuando la idea funcional todavía no está clara:
-1. `definir-producto`
-2. `arrancar-proyecto` si aún falta base documental o estructura mínima
-3. `gestionar-roadmap` para convertir la definición en trabajo mantenible
-4. `definir-arquitectura`
-5. `configurar-entorno`
-6. `configurar-testing`
-7. `definir-reglas-proyecto`
-
-Regla práctica:
-- Si falta producto, no bajar a arquitectura.
-- Si falta arquitectura, no fijar rutas o comandos como si ya fueran definitivos.
-- Si la definición funcional cambia de forma importante, la skill debe ejecutarse antes de seguir implementando.
-- `documentar-con-criterio` ayuda a separar definición funcional útil de ruido narrativo o microdetalle técnico.
-
-## Formato de salida esperado
-La salida principal debe vivir en documentación del proyecto, no en respuestas sueltas.
-
-Debe dejar:
-- una SSOT del proyecto defendible;
-- un mapa de producto separado cuando haya más de una capacidad o módulo;
-- un TODO alineado con el producto real y listo para que `gestionar-roadmap` lo mantenga vivo.
-
-Al definir producto, debe aplicar `documentar-con-criterio` para no inflar la documentación funcional con historia, hipótesis obvias o detalle técnico que no ayude a entender el producto.
-
-## Ejemplos operativos
-### Producto nuevo muy difuso
-El usuario describe varias ideas mezcladas. La skill debe reagruparlas, separar visión y fase, y evitar que la IA salte a stack o código.
-
-### Menú nuevo dentro de una app existente
-El usuario quiere "otro menú". La skill debe decidir si ese menú merece existir o si la capacidad entra mejor como flujo dentro de un módulo ya existente.
-
-### Documentación desalineada
-La app ya tiene código, pero la SSOT no representa bien el producto. La skill debe reencuadrar el producto y documentar el mapeo temporal con el naming técnico actual sin forzar renombres inmediatos.
+- [ ] **Declaro** que NO baje a arquitectura, stack, rutas o codigo mientras la idea siguiera difusa, mal agrupada o con naming provisional (freno deliberado aplicado).
+- [ ] **Declaro** que el producto queda definido en una frase, con usuario principal y problema real explicitos.
+- [ ] **Declaro** que separe vision global, fase actual y capacidades futuras, y que ninguna feature puntual secuestra la definicion.
+- [ ] **Declaro** que los modulos o areas funcionales tienen naming canonico defendible, y que mapee ese naming con el tecnico temporal cuando ya existe codigo.
+- [ ] **Declaro** que la definicion esta materializada en la documentacion canonica del proyecto (SSOT, mapa de producto y TODO, con los nombres que use el proyecto), no solo en la respuesta del chat.
+- [ ] **Declaro** que el criterio de crecimiento para nuevas capacidades, menus o automatizaciones queda documentado.
 
 # Flujo recomendado
-- [ ] Inspeccionar el repositorio, la documentación y el estado real del proyecto.
-- [ ] Detectar si el producto está difuso, mal agrupado o mal nombrado.
+
+- [ ] Inspeccionar el repositorio, la documentacion y el estado real del proyecto.
+- [ ] Detectar si el producto esta difuso, mal agrupado o mal nombrado.
 - [ ] Definir el producto en una frase y el problema real que resuelve.
-- [ ] Separar visión global, fase actual y capacidades futuras.
-- [ ] Agrupar capacidades en módulos o áreas funcionales con buen naming.
-- [ ] Documentar el criterio de crecimiento para nuevas ideas, menús o automatizaciones.
-- [ ] Mapear naming canónico y naming técnico actual si el código ya existe.
-- [ ] Actualizar `docs/SSOT.md`, `docs/product-map.md` y `docs/TODO.md`.
-- [ ] Registrar la decisión en `.teams/` si el proyecto ya está en marcha.
+- [ ] Separar vision global, fase actual y capacidades futuras.
+- [ ] Agrupar capacidades en modulos o areas funcionales con buen naming.
+- [ ] Documentar el criterio de crecimiento y mapear naming canonico/tecnico si ya existe codigo.
+- [ ] Actualizar la documentacion canonica del proyecto (SSOT, mapa de producto y TODO); registrar la decision en la memoria del proyecto, si existe.
+- [ ] Resolver el gate de auto-cita.
 
 # Criterio de resultado bueno
-La skill está bien aplicada si:
-- evita que la IA dispare arquitectura o código sobre una idea aún inmadura;
-- deja claro qué es realmente el producto y qué no;
-- diferencia visión, fase y capacidades futuras;
-- agrupa bien módulos o áreas funcionales;
-- produce documentación reutilizable y no solo una respuesta bonita;
-- y reduce el riesgo de que una feature puntual secuestre la definición completa del producto.
+
+Cierre valido cuando el gate de auto-cita de arriba se cumple con evidencia observable. Esta seccion no anade reglas: es el mirror declarativo del gate, repetido aqui solo porque `validate-hub-skills.ps1` exige el header.
 
 ## Triggers
-- Keywords: producto, que construimos, idea, definir el producto, vision, alcance funcional, modulo nuevo
-- Patrones de usuario: "no tengo claro el producto", "quiero anadir un menu nuevo", "la documentacion no refleja lo que quiero", "definir el producto"
-- Encadenamiento: primera skill antes de arquitectura, entorno o implementacion
 
-# Ejemplos de activación
-"Aún no tengo bien definido el producto."
+- Keywords: producto, que construimos, idea, definir el producto, vision, alcance funcional, modulo nuevo.
+- Patrones de usuario: "no tengo claro el producto", "quiero anadir un menu nuevo", "la documentacion no refleja lo que quiero", "definir el producto".
+- Encadenamiento: primera skill; despues `arrancar-proyecto` si el repo no tiene estructura base; antes de `definir-arquitectura`, `configurar-entorno` o implementacion; despues `gestionar-roadmap` para mantener el TODO vivo y `arrancar-proyecto`/`definir-reglas-proyecto` para concretar la base operativa.
 
-"Quiero añadir un menú nuevo pero no sé si es módulo, flujo o capacidad."
+# Ejemplos de activacion
 
-"La documentación actual no refleja bien lo que realmente quiero construir."
+- "Aun no tengo bien definido el producto."
+- "Quiero anadir un menu nuevo pero no se si es modulo, flujo o capacidad."
+- "La documentacion actual no refleja bien lo que realmente quiero construir."

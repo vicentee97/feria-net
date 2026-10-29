@@ -1,6 +1,6 @@
 # Composición, materialidad y patrones visuales
 
-Esta referencia recoge las directrices concretas de ingeniería de diseño de `elevar-ui-frontend`: composición, tipografía, color, materialidad, estados, formularios, dashboards y el playbook por tipo de superficie. El `SKILL.md` principal resume cuándo aplicarlas.
+Esta referencia recoge criterios de ingeniería de diseño para `elevar-ui-frontend`: composición, tipografía, color, materialidad, estados, formularios, dashboards y playbooks por superficie. El `SKILL.md` principal resume cuándo aplicarlos. Los ejemplos describen relaciones y decisiones; no son valores, componentes ni geometrías obligatorias.
 
 ## Directrices de ingeniería de diseño
 
@@ -9,13 +9,34 @@ Esta referencia recoge las directrices concretas de ingeniería de diseño de `e
 - Clasifica la pantalla: `login/auth`, `dashboard`, `settings`, `wizard`, `empty state`, `table`, `catalog`, `detail`, etc.
 - La prioridad es la claridad operacional de la superficie real, no demostrar rango visual.
 
+### Regla 0.0a: Variación localizada y trazable
+
+- En brownfield, cualquier aumento de expresividad, movimiento o compactación debe poder explicarse contra el patrón interno de una superficie hermana; no basta citar una tendencia o un valor numérico.
+- Si el contrato usa `design_variance`, `motion_intensity` o `visual_density`, sus valores describen la relación con el sistema existente y el alcance local. No determinan por sí mismos color, spacing, duración, componentes ni estructura.
+- Una referencia externa aprobada puede inspirar rasgos transferibles como ritmo, contraste relativo o revelado progresivo, pero no justifica copiar sus píxeles, geometría, marca o composición completa.
+- La ausencia de referencia o de valor numérico no crea un hueco de diseño: conservar el patrón heredado es una decisión válida hasta que la tarea aporte evidencia para variar.
+
+### Regla 0.0: Jerarquía percibida, no declarada
+
+- Antes de estilizar, asigna a cada bloque un rol: contexto, sección, control, ayuda, estado, detalle o acción. Decide qué relaciones deben leerse como continuidad, agrupación, prioridad o separación.
+- Una diferencia de clases, tokens, tamaño o peso no demuestra por sí sola que dos roles se distingan. La prueba es la lectura que transmite la interfaz en el perfil y estado relevantes.
+- Cuando dos roles deban diferenciarse de inmediato, combina las señales que el sistema y la superficie necesiten: posición, agrupación, ritmo, superficie, contraste, tipografía, iconografía o comportamiento. Ninguna señal ni patrón es obligatorio por sí solo.
+- Si el usuario dice que dos niveles "parecen iguales", trátalo como evidencia de jerarquía insuficiente. Revisa primero la relación entre roles y la composición; no defiendas la intención del CSS ni encadenes ajustes arbitrarios.
+- Regla práctica: si un observador necesita leer todos los títulos para saber qué pertenece a qué, la relación visual sigue sin estar resuelta.
+
+### Regla 0.0.1: Contexto útil, no repetido por decoración
+
+- La navegación, la ruta, el estado de página y el contenido pueden aportar contexto simultáneamente. Decide si repetirlo dentro de la superficie cambia una decisión, aclara una excepción o sostiene la orientación.
+- No añadas una cabecera, resumen o etiqueta interna solo para que la pantalla parezca más importante. Mantén la repetición cuando aporte estado, riesgo, acción o orientación que el contexto exterior no da.
+- Regla práctica: si al retirar una repetición el usuario conserva ubicación, propósito y siguiente decisión, esa repetición no era necesaria.
+
 ### Regla 0.1: Una superficie dominante por bloque
 
-- Si una pantalla o card ya define una superficie clara, la IA no debe meter por defecto más tarjetas, paneles o cajas visuales dentro para “ordenar” el contenido.
-- Dentro de una `Card`, el empty state, los KPIs y el CTA deben resolverse primero con layout, espaciado, tipografía y una sola materialidad coherente.
-- Solo se permite una sub-superficie interna cuando tenga una función distinta y real: por ejemplo un formulario separado, una tabla embebida, un bloque colapsable o un área scrollable que necesite delimitación propia.
-- Regla práctica: si al quitar una caja interna la pantalla sigue siendo clara, esa caja sobraba.
-- En dashboards operativos, anidar card dentro de card por estética es un anti-patrón por defecto.
+- Si una pantalla o superficie ya define una unidad clara, no añadir por defecto más paneles internos solo para aparentar orden.
+- Resolver primero estados vacíos, métricas y acciones con estructura, espaciado, tipografía y una materialidad coherente antes de crear una nueva capa visual.
+- Una sub-superficie se justifica cuando aísla una función distinta y real, como una decisión de riesgo, un área con comportamiento propio o contenido que necesita otro modo de exploración.
+- Regla práctica: si al retirar una capa interna la relación entre contenido y acción sigue siendo clara, esa capa sobraba.
+- En dashboards operativos, apilar superficies por estética es un anti-patrón por defecto.
 
 ### Regla 0.1.1: Una prioridad visual dominante por estado
 
@@ -51,7 +72,7 @@ Esta referencia recoge las directrices concretas de ingeniería de diseño de `e
 
 ### Regla 0.3: Jerarquía con estructura, no con trucos
 
-- La IA debe preferir `grid-template`, columnas proporcionales, `align-*`, `justify-*`, `gap`, `minmax()` y `max-width` antes que introducir empujes visuales artificiales.
+- La IA debe preferir relaciones de layout estables, alineación, anchuras con intención y agrupación antes que empujes visuales artificiales.
 - No uses huecos enormes para “equilibrar” algo que en realidad está mal distribuido.
 - Si un layout necesita demasiado aire vacío para verse bien, probablemente aún no está resuelto.
 
@@ -83,37 +104,32 @@ Esta referencia recoge las directrices concretas de ingeniería de diseño de `e
 - La pantalla no debe parecer una colección de etiquetas flotando sobre blanco aunque todos los elementos estén bien alineados.
 - Regla práctica: si al quitar mentalmente los títulos de sección la información se convierte en texto disperso, faltaba articulación.
 
-### Regla 1: Tipografía determinista
+### Regla 1: Tipografía subordinada al rol
 
-- **Display y títulos:** `text-3xl md:text-5xl tracking-tight leading-none` salvo necesidad real de más.
-- **Serifas prohibidas** en dashboards o software.
-- **Cuerpo y párrafos:** sobrios y cortos; no uses texto de apoyo por defecto si no añade claridad real.
+- Determina el contraste tipográfico por función y relación, no por una escala universal. Contexto, sección, control, ayuda y estado no necesitan la misma presencia.
+- Usa el sistema tipográfico real del producto. Una familia, peso, tamaño o ancho concreto solo se fija cuando el design system, legibilidad o una necesidad funcional lo justifican.
+- Mantén el cuerpo y los párrafos sobrios y cortos; no uses texto de apoyo por defecto si no añade claridad real.
 
 ### Regla 1.1: Presupuesto de texto
 
-- La IA debe trabajar con presupuesto de copy, no con texto infinito.
-- En superficies operativas, cada bloque debería intentar contener:
-  - un título corto;
-  - cero o una línea de apoyo;
-  - un CTA claro si hace falta.
-- No expliques con texto lo que ya se entiende por la jerarquía visual, la etiqueta del bloque o el propio botón.
-- Si un párrafo puede convertirse en una línea, debe comprimirse.
-- Si una línea puede desaparecer sin perder comprensión, debe desaparecer.
-- Empty states de dashboard: por defecto un titular corto, una frase útil y un CTA. No más.
+- La IA debe trabajar con un presupuesto de copy proporcional a la complejidad y riesgo de la decisión, no con texto infinito.
+- En superficies operativas, conservar solo título, apoyo y acción que cambien comprensión, consecuencia o siguiente paso; la cantidad concreta depende del contexto.
+- No explicar con texto lo que ya se entiende por jerarquía visual, etiqueta o comportamiento del control.
+- Comprimir, revelar bajo demanda o retirar texto cuando no cambie la comprensión.
+- En estados vacíos, usar el mínimo contenido que oriente, explique el estado y permita continuar si existe una acción útil.
 
 ### Regla 1.2: Copy resiliente
 
 - El copy debe sobrevivir a traducciones, nombres largos y zoom sin destruir la composición.
-- No bases el equilibrio de una tarjeta en que una frase mida exactamente lo mismo que en tu pantalla.
+- No bases el equilibrio de un bloque en que una frase mida exactamente lo mismo que en tu pantalla.
 - Evita textos decorativos largos en zonas estrechas o densas.
 - Si el texto es importante, dale espacio estructural real; si no lo es, recórtalo.
 
 ### Regla 2: Color y materialidad
 
-- Máximo un acento principal.
-- Saturación controlada.
-- Evita negro puro y superficies demasiado contrastadas en interfaces claras si el sistema no lo pide.
-- Diferencia claramente: fondo, superficie, control y estado seleccionado.
+- Usa el acento con intención y según la semántica del sistema. Evita varios acentos compitiendo cuando no representan relaciones o estados diferentes.
+- Ajusta saturación, contraste y profundidad al lenguaje visual existente; no importes una estética por defecto.
+- Diferencia claramente fondo, superficie, control y estado seleccionado cuando la tarea requiera que se lean como roles distintos.
 
 ### Regla 2.1: Materialidad refinada en interfaces claras
 
@@ -125,7 +141,7 @@ Esta referencia recoge las directrices concretas de ingeniería de diseño de `e
 ### Regla 2.2: Color semántico con significado consistente
 
 - Si la IA introduce color semántico en métricas, estados o movimientos, ese color debe responder a una lógica estable y repetible, no a una decoración puntual.
-- Verde, rojo, ámbar, azul o cualquier otro código deben conservar una relación reconocible con éxito, riesgo, alerta, neutralidad o categoría operativa, según el sistema real del producto.
+- Cualquier código cromático debe conservar una relación reconocible con éxito, riesgo, alerta, neutralidad o categoría operativa, según el sistema real del producto.
 - No basta con que el color "quede bien"; debe ayudar a leer y priorizar sin sembrar dudas sobre por qué una cifra o etiqueta está resaltada.
 - Regla práctica: si el usuario no puede explicar en una frase qué significa cada color usado en la pantalla, la semántica cromática está floja.
 
@@ -138,9 +154,9 @@ Esta referencia recoge las directrices concretas de ingeniería de diseño de `e
 
 ### Regla 3: Sombras, bordes y radios
 
-- Define tres niveles de borde: estructural, control y detalle.
-- Usa sombras mínimas y cercanas; no glows.
-- Los radios deben ser consistentes entre botones, cards, inputs y overlays.
+- Diferencia estructura, controles y detalle solo en la medida necesaria para que cada rol se lea sin endurecer toda la interfaz.
+- Usa profundidad y contorno con contención; no introduzcas efectos que compitan con la información.
+- La geometría de controles, superficies y overlays debe conservar la coherencia que marque el sistema real.
 - Antes de introducir nuevos tokens visuales, valida si HeroUI ya ofrece una variante suficiente.
 
 ### Regla 3.1: Divisores y contornos con tacto
@@ -187,15 +203,15 @@ No basta con estilizar el trigger. Hay que verificar también:
 
 ### Regla 6: Patrones de datos y formularios
 
-- Label encima del input.
-- Error debajo del campo.
-- Ayuda solo si aporta.
+- Mantén una relación estable y accesible entre etiqueta, control, ayuda y error; su disposición concreta debe respetar el patrón real del producto y conservar la lectura del campo.
+- Sitúa el error de forma que se asocie inequívocamente al campo afectado y no compita con otros mensajes.
+- La ayuda solo debe persistir si aporta a la decisión.
 - Si una primitive del design system introduce fricción visual, ajusta primero sus props, variantes o `classNames` antes de abandonar el sistema.
 
 ### Regla 6.0.1: Formularios embebidos sin pseudo-diálogo interno
 
-- En una superficie operativa principal, un formulario corto no debe parecer un popup metido dentro de otra card salvo necesidad funcional real.
-- Si el formulario solo recoge 1-3 campos y una acción principal, primero debe resolverse como parte del propio layout del bloque dominante.
+- En una superficie operativa principal, un formulario corto no debe parecer un diálogo artificial dentro de otra capa salvo necesidad funcional real.
+- Si el formulario recoge pocos datos y una acción principal, primero debe resolverse como parte del propio layout del bloque dominante.
 - Solo conviene encapsularlo como sub-superficie fuerte cuando necesite aislamiento funcional real: validación compleja, scroll propio, varios grupos o separación clara de riesgo.
 
 ### Regla 6.1: Métricas, gráficos y dashboards
@@ -203,7 +219,7 @@ No basta con estilizar el trigger. Hay que verificar también:
 - Un KPI o gráfico debe leerse incluso cuando no hay datos, cuando hay pocos datos y cuando hay muchos.
 - Las tarjetas analíticas no deben depender de overlays complejos para explicar su estado.
 - En estados vacíos o parciales, prioriza estructuras reconocibles del propio gráfico: skeletons, barras placeholder, ejes simples o patrones de continuidad visual.
-- La composición ideal de una tarjeta analítica responde a este orden: dato principal, contexto secundario, visualización, acción opcional.
+- La composición debe hacer explícita la relación entre dato dominante, contexto, visualización y acción cuando existan; el orden concreto depende de la tarea que la persona viene a resolver.
 - Si la visualización vacía se entiende mejor que una versión "decorada", gana la visualización vacía.
 
 ### Regla 6.1.1: Resúmenes operativos, no pseudo-tablas ambiguas
@@ -252,18 +268,18 @@ No basta con estilizar el trigger. Hay que verificar también:
 
 ### Regla 6.2: Quick actions en dashboards
 
-- Un bloque de Quick actions no debe dar el mismo peso visual a todas las acciones por defecto.
-- Si existe una acción principal clara del producto, debe dominar con una sola pieza destacada y legible de un vistazo.
-- Las acciones secundarias deben resolverse como una lista operativa compacta, no como varias pseudo-tarjetas hinchadas con el mismo protagonismo.
+- Un bloque de acciones rápidas no debe dar el mismo peso visual a todas las acciones por defecto.
+- Si existe una acción principal clara del producto, debe dominar de forma legible de un vistazo.
+- Las acciones secundarias deben organizarse como un conjunto operativo subordinado, no como piezas hinchadas con el mismo protagonismo.
 - Las acciones no disponibles todavía deben verse preparadas pero subordinadas: bajo contraste, copy corto y un estado honesto como Próximamente.
 - Regla práctica: si el bloque parece una pila de tarjetas grises repetidas, la jerarquía de acciones está mal resuelta.
 
 ### Regla 6.3: Teclados operativos (Numpads) y listas de atajos
 
-- **Materialidad física vs. Ruido corporativo**: En interfaces con mucha interacción táctil (como calculadoras o TPVs), los botones del teclado no deben renderizarse con colores de variante `strong` (`secondary` o pálidos corporativos) porque dispersan la atención: efecto "cielo azul saturado".
-- Emula teclas físicas robustas usando variantes neutras o nulas (ej. `variant="ghost"`) inyectando fondos puros crudos (`bg-white`), contraste extremo (`text-default-800` o `font-black`) y elevaciones imperceptibles de separación (`shadow-sm ring-1 ring-black/5`).
-- **Problema de grilla colapsable**: Los botones de UI-Kits suelen ser `inline-flex`. Si se anidan dentro de celosías tipo `grid grid-cols-*` sin indicar un explícito `w-full h-full`, ignorarán la celda formando extraños botones "lápiz". Forzar el llenado es siempre clave.
-- **Acción ganadora única**: Cuando hay varias vías rápidas que disparan un mismo embudo (Billetes "10€", "20€", "Exacto"), **SÓLO LA SOLUCIÓN IDEAL** debe dominar visualmente (`primary/solid`). El resto deben rebajarse categóricamente a variantes grises para que actúen como red de seguridad secundaria sin distraer el layout.
+- **Materialidad útil frente a ruido corporativo**: En interfaces táctiles u operativas, los controles repetidos deben favorecer reconocimiento, pulsación segura y lectura rápida antes que una paleta de variantes compitiendo.
+- Usa las primitives del sistema para mantener contraste, consistencia y una separación física suficiente. Elige la variante concreta tras consultar el sistema real; no conviertas una clase o color de una librería en receta general.
+- **Grilla con huella completa**: Comprueba que los controles ocupan y respetan la celda que representa su área táctil. Las primitives con tamaño intrínseco pueden romper la retícula aunque su estilo parezca correcto.
+- **Acción ganadora única**: Cuando varias vías convergen en un mismo resultado, deja clara la opción preferible y subordina las alternativas sin volverlas invisibles. La jerarquía viene de la consecuencia y el flujo, no de una variante memorizada.
 
 ### Regla 7: Nada entra sin función clara
 
@@ -288,9 +304,8 @@ No basta con estilizar el trigger. Hay que verificar también:
 - Si un CTA ya vive de forma dominante dentro de un bloque natural del dashboard, no necesita una segunda presencia arriba "por si acaso".
 - La cabecera debe comportarse como un resumen ejecutivo: estado actual, contexto temporal y acciones reales, no una acumulación plana de metadata y botones sueltos.
 - Si la pantalla ya tiene un estado operativo fuerte, la cabecera no debe competir con el bloque principal ni diluir su prioridad.
-- En barras superiores con navegación horizontal, decide explícitamente si el grupo de tabs debe quedar centrado, agrupado o distribuido; no lo dejes flotando dentro de un carril `flex-1` que genere huecos muertos sin intención.
-- El chrome persistente de la aplicación (`top bar`, `sidebar`, shell principal) no debe heredar por defecto el mismo `max-width` que el contenido de página.
-- Si el proyecto usa `scrollbar-gutter: stable`, el chrome fijo a ancho completo debe cubrir el viewport visual real (`w-screen` o equivalente) o compensar explícitamente ese gutter.
+- En barras superiores con navegación horizontal, decide qué relación espacial expresa pertenencia, prioridad y equilibrio; no dejes el grupo en un espacio residual sin intención.
+- El chrome persistente de la aplicación (`top bar`, `sidebar`, shell principal) no debe heredar por defecto las restricciones de anchura del contenido de página. Verifica la relación con el viewport y el scroll real.
 - Una vista operativa de consulta debe dejar claro de un vistazo si su función principal es vigilar, actuar, revisar o cerrar.
 
 ### Auth / login
@@ -302,7 +317,9 @@ No basta con estilizar el trigger. Hay que verificar también:
 ### Admin / settings
 
 - Layout estable, repetible y denso sin saturar.
-- La agrupación y la nomenclatura importan más que adornos.
+- La agrupación, la nomenclatura y la diferencia perceptible entre secciones y controles importan más que los adornos.
+- Antes de destacar una sección, determina qué la hace distinta de una configuración individual: propósito, consecuencias, relación con otros ajustes o riesgo. El tratamiento visual debe expresar esa relación sin imponer un formato único.
+- La ayuda secundaria debe aparecer al nivel de detalle que exige la decisión; no debe competir de forma permanente con ajustes rutinarios.
 - Los cambios peligrosos deben separarse visualmente de la configuración cotidiana.
 
 ### Modal / drawer / popover
@@ -331,6 +348,10 @@ No basta con estilizar el trigger. Hay que verificar también:
 
 ## Errores conocidos que esta skill debe evitar
 
+- Confundir una diferencia declarada en codigo con una diferencia percibida entre roles semanticos.
+- Convertir una solucion visual local o una referencia puntual en una receta obligatoria para todas las pantallas.
+- Responder a feedback como "esto parece igual" defendiendo la intencion de estilos en lugar de comprobar la lectura y cambiar de hipotesis.
+- Validar jerarquia desde el DOM, las clases o un estado aislado sin evidencia visual del perfil y estado que importan.
 - Caer en landingitis cuando la superficie real es operativa.
 - Usar gradientes, orbes, glows o decoración sin función clara.
 - Revisar solo el estado cerrado de una pieza interactiva.
@@ -339,9 +360,9 @@ No basta con estilizar el trigger. Hay que verificar también:
 - Añadir texto explicativo para tapar una UX poco clara.
 - Meter demasiadas explicaciones en menús o superficies operativas.
 - Resolver jerarquía metiendo cajas dentro de cajas en lugar de usar layout, espaciado y tipografía.
-- Anidar `Card` dentro de `Card` o paneles internos sin una necesidad funcional clara.
-- Resolver formularios cortos como si fueran un mini-diálogo metido dentro de la card principal sin necesidad funcional.
-- Convertir un empty state simple en una composición con varias subtarjetas y varios mensajes compitiendo.
+- Anidar superficies o paneles internos sin una necesidad funcional clara.
+- Resolver formularios cortos como si fueran un mini-diálogo metido dentro de la superficie principal sin necesidad funcional.
+- Convertir un estado vacío simple en una composición con varias sub-superficies y mensajes compitiendo.
 - Crear tokens globales para arreglar una sola pantalla sin validar su impacto.
 - Dejar bien el trigger pero mal el dropdown/popover.
 - Mezclar materialidades incompatibles dentro de la misma vista.

@@ -1,165 +1,124 @@
 ---
 name: configurar-testing
-description: "Define o revisa una estrategia de testing proporcional al riesgo del proyecto: tipos de test, rutas, comandos, coberturas utiles y proteccion de comportamientos criticos. TRIGGERS: tests, testing, cobertura, estrategia de test, unit test, integration test, e2e, smoke test."
+description: "Usar al definir o revisar la estrategia de tests de un proyecto: tipos de test, rutas, comandos, cobertura util y proteccion de comportamientos criticos, con intensidad proporcional al riesgo. TRIGGERS: tests, testing, cobertura, estrategia de test, unit test, integration test, e2e, smoke test."
 ---
 
+# Configurar Testing
+
 # Objetivo
-Convertir el contexto técnico y funcional del proyecto en una estrategia de testing clara, pragmática y sostenible.
 
-La skill debe decidir qué tipos de test hacen falta, dónde deben vivir, cómo se ejecutan y qué comportamientos merecen protección desde el principio. El objetivo no es maximizar tests, sino proteger el riesgo real del proyecto con el mínimo conjunto útil.
+Convertir el contexto tecnico y funcional del proyecto en una estrategia de testing clara, pragmatica y sostenible. Decidir que tipos de test hacen falta, donde deben vivir, como se ejecutan y que comportamientos merecen proteccion desde el principio. El objetivo no es maximizar tests, sino proteger el riesgo real del proyecto con el minimo conjunto util.
 
-# Alcance y límites
-- Sí define estrategia de test, niveles de cobertura, rutas, naming y criterios de criticidad.
-- Sí puede recomendar herramientas de testing si encajan con el contexto real del proyecto.
-- Sí debe decidir qué convención de carpetas es más coherente con el repo.
-- No implementa tests ni instala librerías.
-- No obliga a usar todos los tipos de test en todos los proyectos.
+La skill existe para blindar el anti-patron mas tipico: imponer una bateria de tests por dogma sin contexto real, lo que genera cobertura hueca que no protege lo critico.
+
+# Anti-patrones y su correccion
+
+Cada sesgo del entrenamiento base necesita su par MAL -> BIEN -> EJEMPLO. Reconocer el anti-patron no basta para vencerlo.
+
+- **Testing por dogma (D1):** MAL imponer unit + integration + e2e + contract en todos los proyectos sin contexto. BIEN escalar tipos de test al riesgo real: proyectos simples reciben estrategia minima, proyectos con dinero/auth/datos sensibles escalan proteccion. EJEMPLO un CRUD interno sin auth -> unit + integration basico, sin e2e ni contract.
+- **Sobredimensionar lo simple (D2):** MAL meter e2e y contract tests en un MVP pequeno. BIEN proponer el primer conjunto minimo valioso y posponer lo que no aporte riesgo real. EJEMPLO MVP con IA: priorizar contract y flujos criticos, no fijar cada salida variable del modelo.
+- **Testear lo trivial (D3):** MAL cubrir wiring trivial, getters/setters o UI puramente presentacional sin logica. BIEN priorizar logica con combinatoria, fronteras entre modulos, persistencia y flujos criticos. EJEMPLO saltar getters triviales; cubrir en cambio la validacion de un formulario con reglas complejas.
+- **Confundir nivel de test (D4):** MAL usar unit tests para cubrir acceso a base de datos o e2e para logica aislada. BIEN mapear cada comportamiento al tipo correcto (unit = logica aislada, integration = fronteras/DB, e2e = flujos criticos, smoke = arranque, contract = APIs). EJEMPLO frontera modulo-DB -> integration, no unit con mocks dobles.
+- **Ignorar arquitectura/convencion existente (D5):** MAL proponer `tests/` cuando el proyecto ya usa `test/` o `__tests__/` de forma coherente. BIEN respetar la convencion coherente del proyecto; solo proponer cambio si hay incoherencia real. EJEMPLO repo Next.js con `__tests__/` funcionando: mantener, no reescribir a `tests/`.
+- **Documentacion redundante (D6):** MAL abrir `docs/testing.md` extenso repitiendo la SSOT. BIEN volcar la estrategia en `docs/SSOT.md` y solo abrir doc adicional si aporta mas fases/profundidad que la SSOT, aplicando `documentar-con-criterio`. EJEMPLO estrategia simple -> bloque corto en SSOT, sin doc extra.
+
+# Alcance y limites
+- Define estrategia de test, niveles de cobertura, rutas, naming y criterios de criticidad.
+- Puede recomendar herramientas de testing si encajan con el contexto real del proyecto.
+- Decide que convencion de carpetas es mas coherente con el repo.
+- NEVER implementa tests ni instala librerias.
+- NEVER obliga a usar todos los tipos de test en todos los proyectos.
 - No sustituye a `definir-arquitectura`; se apoya en la arquitectura definida.
-- No sustituye a una futura skill de calidad, aunque debe dejar una base clara para ella.
-- No debe vender testing por dogma: debe enseñar criterio práctico.
+- No debe vender testing por dogma: ensea criterio practico.
 
 # Inputs / contexto obligatorio
 - [SSOT del repositorio](../docs/SSOT.md).
 - [Reglas globales compartidas](../docs/AI_GLOBAL_RULES.md).
-- [Skill transversal de documentación](../documentar-con-criterio/SKILL.md).
+- [Skill transversal de documentacion](../documentar-con-criterio/SKILL.md).
 - [Plantilla de SSOT de proyecto](../docs/PROJECT_SSOT_TEMPLATE.md).
-- Estructura real del repositorio.
-- Arquitectura ya definida, si existe.
-- Stack detectable.
-- Comandos actuales del proyecto.
-- Comportamiento crítico conocido del proyecto.
+- Estructura real del repositorio, arquitectura ya definida, stack detectable, comandos actuales y comportamiento critico conocido.
 
 # Comportamiento esperado
-La skill debe empezar inspeccionando stack, arquitectura y comandos existentes antes de recomendar cualquier estrategia.
 
-Si al aterrizar la estrategia hay que crear varias configuraciones, tests y rutas, no debe hacerse con un único parche masivo: dividir por bloques forma parte del comportamiento esperado.
+La skill empieza inspeccionando stack, arquitectura y comandos existentes antes de recomendar cualquier estrategia. Si al aterrizar la estrategia hay que crear varias configuraciones, tests y rutas, no se hace con un unico parche masivo: dividir por bloques forma parte del comportamiento esperado.
 
-Después debe:
-1. Identificar comportamientos críticos y puntos de regresión caros.
-2. Clasificar necesidades entre unit, integration, e2e, smoke o contract tests cuando aplique.
-3. Decidir la estrategia mínima útil según riesgo.
-4. Recomendar herramientas y convenciones solo si encajan con el stack real.
-5. Documentar la estrategia final en `docs/SSOT.md`.
+Despues: identificar comportamientos criticos y puntos de regresion caros; clasificar necesidades entre unit, integration, e2e, smoke o contract cuando aplique; decidir la estrategia minima util segun riesgo; recomendar herramientas y convenciones solo si encajan con el stack real; y documentar la estrategia final en `docs/SSOT.md`.
 
-## Política de ubicación de tests
-- `tests/` es la recomendación por defecto para proyectos nuevos.
-- `test/` o `__tests__/` pueden aceptarse si el stack o el proyecto ya están alineados así.
-- Los tests co-localizados solo deben proponerse cuando el framework o la ergonomía del proyecto lo justifiquen claramente.
-- Si el proyecto ya tiene una convención coherente, la skill debe respetarla.
-- `.test` no es una convención documentada en este repositorio y no debe proponerse como base por defecto.
+## Politica de ubicacion de tests
+- `tests/` es la recomendacion por defecto para proyectos nuevos.
+- `test/` o `__tests__/` pueden aceptarse si el stack o el proyecto ya estan alineados asi (anti-patron D5).
+- Los tests co-localizados solo deben proponerse cuando el framework o la ergonomia del proyecto lo justifiquen claramente.
+- `.test` no es una convencion documentada en este repositorio y no debe proponerse como base por defecto.
 
-## Qué debe cubrir la estrategia de testing como mínimo
-- Ruta principal de tests.
-- Comando base de test.
-- Qué comportamientos son críticos.
-- Qué tipo de test protege cada zona importante.
-- Qué nivel de cobertura inicial es suficiente.
-- Qué se pospone legítimamente para no ralentizar el proyecto.
+## Que debe cubrir la estrategia de testing como minimo
+Ruta principal de tests; comando base de test; que comportamientos son criticos; que tipo de test protege cada zona importante; que nivel de cobertura inicial es suficiente; y que se pospone legitimamente para no ralentizar el proyecto.
 
-## Política de pragmatismo
-- Los proyectos simples no deben recibir una estrategia de testing sobredimensionada.
-- Los proyectos con lógica crítica, dinero, autenticación, integraciones o datos sensibles deben escalar el nivel de protección.
-- Cuando no haya tests aún, la skill debe proponer el primer conjunto mínimo valioso, no una batería idealizada.
+## Politica de pragmatismo
+Los proyectos simples no deben recibir estrategia sobredimensionada (anti-patron D2). Los proyectos con logica critica, dinero, autenticacion, integraciones o datos sensibles escalan el nivel de proteccion. Cuando no haya tests aun, la skill propone el primer conjunto minimo valioso, no una bateria idealizada.
 
-## Cuándo pedir cada tipo de test
-### Unit
-Úsalos para:
-- lógica aislada;
-- reglas con combinatoria;
-- transformaciones puras;
-- validaciones con casuística clara.
+## Cuando pedir cada tipo de test
+- **Unit:** logica aislada; reglas con combinatoria; transformaciones puras; validaciones con casuistica clara.
+- **Integration:** fronteras entre modulos; acceso a base de datos; servicios internos; integraciones relevantes; puntos donde una regresion no se detecta bien con unit tests.
+- **E2E:** flujos criticos de negocio; autenticacion; checkout, reserva, agenda, altas o cualquier camino principal del producto; validaciones que solo tienen sentido con el sistema unido.
+- **Smoke:** comprobar arranque; validar salud basica; verificar que el sistema no esta roto de forma gruesa tras cambios o despliegues.
+- **Contract:** solo si hay APIs o integraciones donde compensa asegurar contratos y el coste de ruptura entre consumidores y proveedores justifica esa capa.
 
-### Integration
-Úsalos para:
-- fronteras entre módulos;
-- acceso a base de datos;
-- servicios internos;
-- integraciones relevantes;
-- puntos donde una regresión no se detecta bien con unit tests.
-
-### E2E
-Úsalos para:
-- flujos críticos de negocio;
-- autenticación;
-- checkout, reserva, agenda, altas o cualquier camino principal del producto;
-- validaciones que solo tienen sentido con el sistema unido.
-
-### Smoke
-Úsalos para:
-- comprobar arranque;
-- validar salud básica;
-- verificar que el sistema no está roto de forma gruesa tras cambios o despliegues.
-
-### Contract
-Úsalos solo si:
-- hay APIs o integraciones donde compensa asegurar contratos;
-- el coste de ruptura entre consumidores y proveedores justifica esa capa.
-
-## Qué no testear todavía
-- Wiring trivial.
-- Getters, setters o wrappers sin valor propio.
-- UI puramente presentacional salvo que exista lógica crítica.
-- Caminos poco valiosos cuando el coste supere claramente el riesgo actual.
-- Detalles demasiado variables del comportamiento de un modelo de IA cuando lo importante sea validar contrato, flujo o fallback.
+## Que no testear todavia
+Wiring trivial; getters, setters o wrappers sin valor propio (anti-patron D3); UI puramente presentacional salvo logica critica; caminos poco valiosos cuando el coste supere claramente el riesgo actual; detalles demasiado variables del comportamiento de un modelo de IA cuando lo importante sea validar contrato, flujo o fallback.
 
 ## Formato de salida
-La salida principal debe actualizar `docs/SSOT.md`, especialmente el bloque de tests y validaciones críticas.
+La salida principal actualiza `docs/SSOT.md`, especialmente el bloque de tests y validaciones criticas. La skill puede crear un documento adicional en `docs/` solo si la estrategia necesita mas detalle, fases o profundidad que la SSOT; antes de abrir doc adicional aplica `documentar-con-criterio` (anti-patron D6).
 
-La skill puede crear un documento adicional en `docs/` solo si la estrategia de testing necesita más detalle, más fases o más profundidad de la que conviene meter en la SSOT.
+## Relacion con otras skills
+- `arrancar-proyecto` prepara la base del repo; `definir-arquitectura` define que zonas del sistema existen; `configurar-testing` decide como protegerlas; `documentar-con-criterio` ayuda a fijar cuanto detalle documental necesita la estrategia; `definir-reglas-proyecto` consolida rutas y comandos del proyecto; `validar-calidad` puede usar esta estrategia como checklist operativo.
 
-Antes de abrir documentación adicional, debe aplicar `documentar-con-criterio` para no convertir la estrategia de testing en texto redundante o excesivamente teórico.
+# Ejemplos operativos
 
-## Relación con otras skills
-- `arrancar-proyecto` prepara la base del repo.
-- `definir-arquitectura` define qué zonas del sistema existen.
-- `configurar-testing` decide cómo protegerlas.
-- `documentar-con-criterio` ayuda a fijar cuánto detalle documental necesita la estrategia y cuándo basta con la SSOT.
-- `definir-reglas-proyecto` consolida rutas y comandos del proyecto.
-- Una futura `validar-calidad` puede usar esta estrategia como checklist operativo.
-
-## Ejemplos operativos
-### CRUD interno simple
-- Favorecer unit tests y algún integration básico.
-- Evitar e2e complejos si el riesgo es bajo.
-
-### SaaS con auth y pagos
-- Elevar integración y e2e en flujos críticos.
-- No confiar solo en unit tests.
-
-### Frontend con formularios complejos
-- Añadir tests de interacción donde la lógica de validación y estado lo justifique.
-- No gastar esfuerzo en componentes puramente visuales si no aportan riesgo real.
-
-### Backend API con base de datos e integraciones externas
-- Priorizar integration tests y algunos contract tests cuando compense.
-- Proteger especialmente errores de frontera y persistencia.
-
-### MVP con IA
-- Testear contratos, flujos críticos y fallbacks.
-- No intentar fijar con exceso de rigidez cada salida variable del modelo.
+- **CRUD interno simple:** favorecer unit tests y algun integration basico; evitar e2e complejos si el riesgo es bajo.
+- **SaaS con auth y pagos:** elevar integracion y e2e en flujos criticos; no confiar solo en unit tests.
+- **Frontend con formularios complejos:** anadir tests de interaccion donde la logica de validacion y estado lo justifique; no gastar esfuerzo en componentes puramente visuales sin riesgo real.
+- **Backend API con base de datos e integraciones externas:** priorizar integration tests y algunos contract tests cuando compense; proteger especialmente errores de frontera y persistencia.
+- **MVP con IA:** testear contratos, flujos criticos y fallbacks; no intentar fijar con exceso de rigidez cada salida variable del modelo.
 
 # Flujo recomendado
 - [ ] Inspeccionar stack, arquitectura y comandos del proyecto.
-- [ ] Identificar comportamientos críticos y zonas de mayor riesgo.
-- [ ] Decidir qué tipos de test aportan valor real.
-- [ ] Elegir convención de ruta coherente, con `tests/` como base por defecto.
-- [ ] Definir el mínimo conjunto útil de protección.
-- [ ] Documentar estrategia, rutas y comandos en `docs/SSOT.md`.
-- [ ] Crear documentación adicional solo si de verdad aporta valor.
+- [ ] Identificar comportamientos criticos y zonas de mayor riesgo.
+- [ ] Decidir que tipos de test aportan valor real; elegir convencion de ruta coherente (`tests/` por defecto).
+- [ ] Definir el minimo conjunto util de proteccion; documentar estrategia, rutas y comandos en `docs/SSOT.md`.
+- [ ] Crear documentacion adicional solo si de verdad aporta valor.
+- [ ] Resolver gate de auto-cita + gate de segunda IA.
+
+# Cierre OBLIGATORIO: gate de auto-cita
+
+Antes de declarar la estrategia de testing definida y documentada, declarar (auto-cita con evidencia, no auto-evaluacion). Maximo 7 items:
+
+- [ ] **Declaro** que inspeccione stack, arquitectura y comandos reales del proyecto antes de proponer tipos de test (no testing por dogma, anti-patron D1).
+- [ ] **Declaro** que escalé tipos de test al riesgo real: simple -> minima, critico -> elevada (anti-patron D2).
+- [ ] **Declaro** que excluí wiring trivial, getters/setters y UI puramente presentacional sin logica (anti-patron D3), citando las zonas no cubiertas.
+- [ ] **Declaro** que mapeé cada comportamiento critico al tipo de test correcto (unit/integration/e2e/smoke/contract), no mezclé niveles a ciegas (anti-patron D4).
+- [ ] **Declaro** que respeté la convencion de rutas coherente del proyecto o propuse `tests/` solo si no existia convencion coherente (anti-patron D5).
+- [ ] **Declaro** que la salida vive en `docs/SSOT.md` y solo abrí doc adicional tras aplicar `documentar-con-criterio` (anti-patron D6).
+- [ ] **Declaro** el resultado del gate de segunda IA (ver abajo).
+
+## Gate de segunda IA (OBLIGATORIO, no sugerencia)
+
+El agente que define la estrategia no es el que la califica. Antes de cerrar:
+
+- **Proyecto con auth, pagos, datos sensibles o flujos criticos** -> delegar OBLIGATORIAMENTE a **@qa-validador** para validar que la estrategia cubre los puntos de regresion caros con el tipo correcto de test.
+- **Estrategia que redefine rutas o comandos de test en un proyecto en marcha** -> delegar OBLIGATORIAMENTE a **@qa-validador** para confirmar que la convencion elegida no rompe CI/validadores existentes.
+- **Cambios en SSOT que abren documentacion adicional de tests** -> escalar a `documentar-con-criterio` (ya cubierto por anti-patron D6); @qa-validador entra solo si el cambio afecta gates de build.
+- **Estrategia trivial sobre CRUD simple y sin auth** -> sin segunda IA obligatoria (no burocracia innecesaria).
 
 # Criterio de resultado bueno
-La skill está bien aplicada si:
-- la estrategia de testing encaja con el riesgo real del proyecto;
-- protege lo crítico sin sobrecargar el desarrollo;
-- deja clara la convención de rutas y comandos;
-- respeta la arquitectura y la estructura ya existentes cuando son coherentes;
-- y enseña criterio práctico en lugar de imponer una batería de tests sin contexto.
+
+Cierre valido cuando el gate de auto-cita de arriba se cumple con evidencia observable y el gate de segunda IA esta resuelto segun la tipificacion. Esta seccion no anade reglas: es el mirror declarativo del gate, repetido aqui solo porque `validate-hub-skills.ps1` exige el header.
 
 ## Triggers
 - Keywords: tests, testing, cobertura, estrategia de test, unit test, integration test, e2e, smoke test
 - Patrones de usuario: "configura tests", "estrategia de testing", "que tests necesitamos", "cobertura de tests"
-- Encadenamiento: despues de `definir-arquitectura`, antes de `definir-reglas-proyecto`
+- Encadenamiento: despues de `definir-arquitectura`, antes de `definir-reglas-proyecto`; hermana de `validar-calidad`
 
-# Ejemplos de activación
+# Ejemplos de activacion
 "Configura una estrategia de testing para este proyecto, proporcional al riesgo y coherente con su arquitectura y stack."
 
+"Necesito saber que tests poner primero en este SaaS con auth y pagos."

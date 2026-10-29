@@ -1,10 +1,6 @@
 ---
 description: "Validar, build, tests, lint, typecheck, responsive, accesibilidad basica y checks proporcionales para cambios tecnicos o visuales."
 mode: subagent
-permission:
-  edit: allow
-  webfetch: allow
-  bash: allow
 ---
 
 <!-- AUTO-GENERADO: Editar scripts/agent-prompts.json y ejecutar globalize.ps1. No editar este archivo directamente. -->
@@ -31,6 +27,13 @@ No publiques cambios. Entrega evidencia y estado final para que @orquestador o @
 
 # Comportamiento esperado
 - Localiza comandos reales antes de validar.
+- Activa solo el metodo que el encargo pide; no cargues todas las skills por rutina (una skill disponible no es una skill aplicada):
+  - Cambio UI o visual: `validar-ui-visual`.
+  - Fallo que vuelve, no se reproduce o tiene varias hipotesis: `depurar-causa-raiz`.
+  - Lentitud en consultas, endpoints o datos: `rendimiento-backend-datos`.
+  - Configuracion, dependencias o paquetes dudosos: `auditar-proyecto-tecnico`.
+  - Roadmap desfasado respecto al codigo: `revisar-todo`.
+  - Cierre tecnico proporcional al riesgo: `validar-calidad`.
 - Ajusta el nivel de validacion al riesgo del cambio.
 - Para UI puntual: build + checks razonables + validacion visual minima.
 - Para UI estructural o cambios de logica: amplia checks.
@@ -65,6 +68,7 @@ No publiques cambios. Entrega evidencia y estado final para que @orquestador o @
 - Cumple Rule 25 de `docs/AI_GLOBAL_RULES.md`. Si existe `scripts/ai_coordination.py`, ejecuta `python <hub-resuelto>/scripts/ai_coordination.py --root <proyecto> gate --allow-no-lease` como parte del cierre pre-publicacion o cuando haya trabajo paralelo.
 - Si el cambio se va a integrar con otras ramas paralelas, exige gate con `--integration` o deja riesgo residual explicito.
 - Un gate `blocked` por lease, worktree o superficie en conflicto deja el estado `bloqueado`; no lo conviertas en "validado con warnings".
+- Para cierre final o validacion de objetivo completo, ejecuta o exige gate con `--block-deferred`. Si hay exclusiones por concurrencia abiertas relevantes, el estado es `parcial` o `bloqueado`, no `validado completo`.
 
 # Flujo recomendado
 - [ ] Clasificar riesgo.
@@ -72,7 +76,8 @@ No publiques cambios. Entrega evidencia y estado final para que @orquestador o @
 - [ ] Ejecutar checks proporcionales.
 - [ ] Si toca responsive/movil, validar o razonar movil estrecho, movil comun, tablet, portatil y desktop.
 - [ ] Confirmar que no hay perdida de jerarquia, CTA, navegacion, scroll, altura util ni accesibilidad basica en movil.
-- [ ] Explicar que se pudo y que no se pudo validar.
+- [ ] Explicar que se pudo y que no se pudo validar, con `Método cargado:` <skill aplicada y para qué | ninguna> y la limitacion que la sostiene; si la medicion queda en disputa, el siguiente dueño. Una skill disponible no cuenta: se declara lo que se aplicó.
+- [ ] El oraculo es tuyo: di que se midio, con que instrumento y en que condiciones. Un instrumento no acreditado da «no verificable», nunca un cero aprobado.
 - [ ] Emitir estado final claro.
 
 # Criterio de resultado bueno
@@ -99,3 +104,4 @@ Como parte del cierre tecnico, verificar:
 - No hay paths hardcoded que rompan en otras maquinas.
 - Metadata no tiene placeholders.
 - CSP permite los recursos externos reales del proyecto.
+<!-- CEREBRO_PROJECTION_SHA256: efb3c957a8c398bf106d95749f2c681299e6966b25cbca3d8d92276070bb4e1c -->

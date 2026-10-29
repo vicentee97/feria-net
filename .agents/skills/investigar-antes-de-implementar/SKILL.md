@@ -1,6 +1,6 @@
 ---
 name: investigar-antes-de-implementar
-description: "Fuerza investigacion exhaustiva antes de implementar: contrastar fuentes primarias, verificar documentacion actual y no asumir APIs, librerias ni configuraciones. TRIGGERS: investigar, buscar, fuentes, contrastar, verificar, docs, documentacion, antes de implementar, no asumir."
+description: "Usar antes de implementar contra una API, libreria, framework, SDK o servicio externo: contrastar fuentes primarias, verificar version real y documentacion actual, y no asumir APIs ni configuraciones de memoria. TRIGGERS: investigar, buscar, fuentes, contrastar, verificar, docs, documentacion, antes de implementar, no asumir."
 ---
 
 # Investigar Antes De Implementar
@@ -56,6 +56,23 @@ Cuando las fuentes no coincidan:
 - No ignorar discrepancias entre documentacion y version instalada.
 - No esconder la incertidumbre: si no se pudo verificar, declararlo como riesgo.
 
+## Iron Law: VERIFICAR VERSION REAL Y DOCUMENTACION PRIMARIA ANTES DE IMPLEMENTAR
+
+NO IMPLEMENTO CONTRA UNA API, LIBRERIA, FRAMEWORK, SDK O SERVICIO EXTERNO SIN HABER VERIFICADO PRIMERO LA VERSION REAL INSTALADA EN EL PROYECTO Y LA DOCUMENTACION PRIMARIA ACTUAL DE ESA VERSION.
+
+**Consecuencia si se incumple:** El codigo compila pero falla en runtime porque la API cambio, depreco, se renombro o nunca existio en esa version. El usuario paga el coste de debuggear lo que se asumio sin verificar.
+
+## Rationalization Table: cuando "ya conozco" la tecnologia
+
+Pensamientos tipicos del LLM y la realidad que los desmonta:
+
+| Pensamiento | Realidad |
+|---|---|
+| "Ya use esta libreria antes, me la se" | Las APIs cambian entre versiones; un metodo puede deprecar o renombro. La memoria del modelo cubre una version, el proyecto puede estar en otra muy distinta. |
+| "Es una libreria estable, no ha cambiado" | "Estable" no significa "inmutable". Un release mayor o menor puede romper contratos, signatures o defaults sin avisar. La verificacion siempre es barata comparada con reimplementar. |
+| "El snippet que tengo en memoria es valido" | Los snippets de blog suelen ser de hace anos y rara vez se actualizan. La realidad del proyecto diverge y arrastra errores silenciosos que solo aparecen al ejecutar. |
+| "El usuario quiere velocidad, no perder tiempo investigando" | Implementar sin verificar genera codigo que falla en produccion. El tiempo de investigar se recupera rapido; el de debuggear un contrato incorrecto, no. |
+
 # Flujo recomendado
 - [ ] Definir exactamente que hay que verificar.
 - [ ] Localizar version y configuracion real del proyecto.
@@ -64,12 +81,12 @@ Cuando las fuentes no coincidan:
 - [ ] Implementar solo con la informacion suficiente.
 - [ ] Reportar brevemente fuentes, version y riesgos.
 
-# Criterio de resultado bueno
-La skill esta bien aplicada si:
-- el agente sabe que API, version y patron esta usando;
-- la implementacion no depende de una suposicion del modelo;
-- las fuentes usadas quedan claras para el orquestador o el siguiente agente;
-- cualquier incertidumbre relevante queda visible.
+# Criterio de resultado bueno (gate de cierre, auto-cita)
+- [ ] **Declaro** la materialidad comprobada: la API/prop/config no estaba ya usada en el repo y no era verificable leyendo el codigo instalado (paso 0: node_modules, lockfile, d.ts).
+- [ ] **Declaro** el umbral de caducidad evaluado: pre-release (alpha/beta/rc), version mayor posterior a mi corte de entrenamiento, o cambio mayor en los ultimos 12 meses.
+- [ ] **Declaro** las fuentes primarias consultadas con la version verificada (el codigo instalado cuenta como fuente y va primero por ser el mas barato).
+- [ ] **Declaro** que la implementacion no depende de ninguna suposicion del modelo.
+- [ ] **Declaro** las incertidumbres relevantes visibles para @orquestador o el siguiente agente.
 
 ## Formato de salida recomendado
 Cuando la investigacion sea material, incluir un bloque breve:

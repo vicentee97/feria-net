@@ -1,6 +1,6 @@
 ---
 name: crear-skills
-description: "Define el estandar canonico para crear, reescribir o normalizar skills del hub, alineando frontmatter, estructura, tono y compatibilidad multi-IDE. TRIGGERS: crear skill, nueva skill, normalizar skill, reescribir skill, estructura skill, skill nueva."
+description: "Usar cuando vayas a crear, reescribir o normalizar una skill del hub y necesites asegurar frontmatter, estructura, tono y compatibilidad multi-IDE segun el estandar canonico. TRIGGERS: crear skill, nueva skill, normalizar skill, reescribir skill, estructura skill, skill nueva."
 ---
 
 # Objetivo
@@ -12,10 +12,13 @@ Garantizar que todas las skills del repositorio sigan la misma estructura, lengu
 - No redefine reglas globales ni de proyecto; solo estandariza el formato y los apartados.
 
 ## Diferencia: skills de dominio vs skills de agentes
-- **Skills de dominio**: resuelven tareas tecnicas concretas (ej: configurar-github, elevar-ui-frontend, estandarizar-docker-local).
-- **Skills de agentes**: definen roles especializados que orquestan o ejecutan trabajo bajo direccion del orquestador (ej: arquitecto, implementador, revisor, experto-github).
-- Para crear **agentes nuevos**, usar la skill `crear-agentes`, no esta skill.
-- Para crear **skills de dominio nuevas**, usar esta skill.
+- **Skills de dominio** (esta skill): resuelven tareas técnicas concretas (ej: `configurar-github`, `elevar-ui-frontend`, `estandarizar-docker-local`).
+- **Skills de agentes**: definen roles especializados que orquestan o ejecutan trabajo bajo dirección de `@orquestador`. Para crear agentes nuevos, usar `crear-agentes`, no esta skill.
+
+## Frontera con endurecer-skills
+- `crear-skills` (esta) -> la skill existe y tiene forma (carpeta, frontmatter, encoding, naming, secciones, triggers).
+- `endurecer-skills` -> la skill se cumple de verdad (cognicion del LLM, posicion en el archivo, tipo de regla, gates de cierre, anti-patrones de diseno).
+- Flujo canonico: primero `crear-skills` (existe), despues `endurecer-skills` (se cumple). **MUST:** cargar `endurecer-skills` antes de escribir contenido operativo de cualquier skill nueva o normalizada, para que el criterio se cumpla en runtime, no solo exista.
 
 # Inputs / contexto obligatorio
 - [SSOT del repositorio](../docs/SSOT.md) (estructura estándar de skills).
@@ -23,24 +26,12 @@ Garantizar que todas las skills del repositorio sigan la misma estructura, lengu
 - SKILLs existentes para detectar divergencias.
 
 # Comportamiento esperado
-- Antes de crear nada, busca si ya existe una skill que cubra el mismo objetivo; si existe, actualízala en lugar de duplicarla.
-- Crear una nueva carpeta usando el identificador técnico canónico de la skill.
-- Crear `SKILL.md` usando la estructura estándar definida en el SSOT.
-- Mantener el tono claro, directo y operativo.
-- Evitar secciones redundantes o demasiado extensas: cada apartado debe aportar valor práctico.
-- Si hay contenido relevante, reubicarlo en el apartado correcto en lugar de eliminarlo.
-- Separar siempre identificador técnico y nombre visible humano sin usar el frontmatter como nombre bonito.
+- Antes de crear, buscar si ya existe una skill que cubra el objetivo; si existe, actualizarla en lugar de duplicarla.
+- Crear carpeta + `SKILL.md` siguiendo el identificador técnico canónico y la estructura del SSOT; tono claro, directo y operativo.
+- Cada apartado debe aportar valor práctico: evitar secciones redundantes o extensas y reubicar contenido en lugar de eliminarlo.
+- Separar identificador técnico y nombre visible humano (sin usar el frontmatter como nombre bonito).
 - Si la skill crea o corrige documentación, enlazar `../documentar-con-criterio/SKILL.md` como referencia transversal en lugar de duplicar sus reglas.
-- Si una tarea real revela una laguna o sesgo claro en una skill existente, debe corregirse esa skill de forma proactiva en lugar de dejar la mejora solo en el código puntual.
-- Esa proactividad debe reservarse para reglas importantes y reusables; no para microdetalles locales que solo inflan la skill sin mejorar realmente su criterio general.
-
-## Seccion canónica: Triggers
-Toda skill del hub debe incluir una seccion `## Triggers` antes de `## Ejemplos de activacion` con:
-- **Keywords**: palabras o frases cortas que deben activar la skill.
-- **Patrones de usuario**: frases tipicas que el usuario diria y que deberian dispararla.
-- **Encadenamiento**: skills que cargar antes o despues cuando aplique.
-
-Esta seccion es obligatoria para nuevas skills y debe anadirse a skills existentes cuando se normalicen.
+- Corregir proactivamente lagunas o sesgos en esta skill, pero solo para reglas importantes y reusables, no para microdetalles locales.
 
 ## Convención de nombres obligatoria
 - El identificador técnico debe estar en español.
@@ -54,6 +45,10 @@ Esta seccion es obligatoria para nuevas skills y debe anadirse a skills existent
 Ejemplos válidos:
 - Carpeta: `configurar-github` | `name`: `configurar-github` | título: `# Configurar GitHub`
 - Carpeta: `ordenar-archivos` | `name`: `ordenar-archivos` | título: `# Ordenar Archivos`
+
+## Registro de skills nuevas
+- Toda skill nueva DEBE registrarse en `scripts/agent-prompts.json` (lista `skills` de al menos un agente) y añadirse al árbol de directorios del README (línea con `Skill:`).
+- Sin esos dos pasos `pwsh scripts/validate-hub.ps1` falla: la carpeta queda como skill no registrada y el conteo del README no cuadra.
 
 ## Regla: sin emojis
 - Las skills del hub no deben incluir emojis en títulos, headers, bullets ni contenido.
@@ -73,40 +68,53 @@ Ejemplos válidos:
   ```yaml
   description: "Gestiona git y GitHub con criterio operativo... TRIGGERS: subir, push, publicar, github, commit, release."
   ```
-- El límite es 1024 caracteres; priorizar keywords relevantes y frecuentes.
+- El límite formal es 1024 caracteres, pero la superficie real de discovery en DSH corta a 500: los primeros 500 deben llevar el momento de activación y los triggers fuertes. Acentos: los validadores del hub comparan plegando acentos, pero evítalos en keywords por consistencia.
 
 ## Regla: sección `## Triggers` obligatoria
-- Toda skill debe incluir una sección `## Triggers` antes de `## Ejemplos de activación`.
+- Toda skill debe incluir una sección `## Triggers` antes de `# Ejemplos de activación`.
 - Debe contener tres subapartados:
   1. **Keywords**: palabras o frases cortas que activan la skill.
   2. **Patrones de usuario**: frases típicas que el usuario diría.
   3. **Encadenamiento**: skills que cargar antes o después cuando aplique.
 - Esta sección es obligatoria para nuevas skills y debe añadirse a skills existentes cuando se normalicen.
 
-# Flujo recomendado
-- [ ] Leer `docs/SSOT.md` y la estructura estándar de skills.
-- [ ] Revisar `docs/AI_GLOBAL_RULES.md` para respetar reglas generales.
-- [ ] Confirmar que no existe ya una skill equivalente.
-- [ ] Crear (o actualizar) la carpeta/archivo correspondiente.
-- [ ] Validar que el identificador técnico sigue la convención `verbo-tema` en español y `kebab-case`.
-- [ ] Verificar que el frontmatter queda compatible con los IDEs soportados: `name == carpeta` y `description` entre comillas dobles.
-- [ ] Incluir `TRIGGERS:` en el campo `description` del frontmatter con keywords relevantes.
-- [ ] Escribir `SKILL.md` siguiendo el patrón estándar y añadir enlaces a SSOT/reglas globales compartidas en inputs.
-- [ ] Añadir la sección `## Triggers` con keywords, patrones de usuario y encadenamiento.
-- [ ] Verificar que no hay emojis en ninguna parte del archivo.
-- [ ] Guardar el archivo con encoding UTF-8 válido y verificar que no hay secuencias corruptas.
-- [ ] Revisar coherencia, orden y claridad del texto antes de cerrar.
+## Regla: gate de cierre con auto-cita (canon del hub)
 
-# Criterio de resultado bueno
-La skill está bien creada si:
-- Sigue la estructura estándar.
-- Su objetivo es claro en las primeras líneas.
-- Define comportamientos accionables y verificables.
-- El frontmatter incluye `TRIGGERS:` en el campo `description`.
-- Incluye la sección `## Triggers` con keywords, patrones y encadenamiento.
-- No contiene emojis ni caracteres que puedan entorpecer el parsing de la IA.
-- El archivo se guarda con encoding UTF-8 válido sin secuencias corruptas.
-- Incluye una frase de activación útil.
+Toda skill del hub DEBE cerrar con un único gate de cierre en modo **auto-cita** (declaración con evidencia observable), no en modo **auto-evaluación** (pregunta o aspiración como "la skill está bien aplicada si..."). El anti-patrón clásico alimenta "marcado fantasma": el modelo marca "hecho" sin verificar. Ver `endurecer-skills` principio 6.
+
+El header `## Criterio de resultado bueno` se mantiene por compatibilidad con `validate-hub-skills.ps1`, pero su contenido DEBE reformularse como auto-cita.
+
+Plantilla base (máximo 7 items en total; cada skill de dominio añade los específicos). Cada item del gate debe citar su artefacto verificable (fichero:linea, comando+salida o TEAM_ID); un Declaro sin artefacto citable es auto-evaluación disfrazada:
+
+- [ ] Declaro que cargué los inputs obligatorios (SSOT, reglas globales, archivos citados).
+- [ ] Declaro que apliqué las hard rules (MUST/NEVER) con evidencia observable por otra IA.
+- [ ] Declaro que evité cada anti-patrón listado en la skill, citando cuál aplicaba a este caso concreto.
+- [ ] Declaro que ejecuté el gate externo (comando / test / segunda IA) cuando la skill lo exige.
+- [ ] Declaro el recorte de densidad citando el artefacto: qué información quité, a qué archivo de referencia la moví o a qué fuente enlacé (principio 4 de `endurecer-skills`).
+
+# Flujo recomendado
+- [ ] Leer `docs/SSOT.md` y `docs/AI_GLOBAL_RULES.md`; confirmar que no existe ya una skill equivalente.
+- [ ] Crear (o actualizar) carpeta + `SKILL.md` con la estructura del SSOT y enlaces a fuentes canónicas en inputs.
+- [ ] Validar identificador técnico `verbo-tema` en español, kebab-case, `name == carpeta` y `description` entre comillas dobles.
+- [ ] Incluir `TRIGGERS:` en `description` y la sección `## Triggers` (keywords, patrones, encadenamiento); registrar la skill en `scripts/agent-prompts.json`; despues de crearla, endurecerla con `endurecer-skills`.
+- [ ] Verificar ausencia de emojis y encoding UTF-8 válido sin secuencias corruptas.
+- [ ] Aplicar el gate de cierre con auto-cita (ver regla anterior) antes de declarar la skill lista.
+
+# Criterio de resultado bueno (gate de cierre, auto-cita)
+
+Antes de declarar la skill creada o normalizada como lista, declarar:
+
+- [ ] Declaro que cargué `docs/SSOT.md`, `docs/AI_GLOBAL_RULES.md` y las skills hermanas (`endurecer-skills`, `documentar-con-criterio`).
+- [ ] Declaro que el identificador técnico sigue `verbo-tema` en español, kebab-case y `name == carpeta`.
+- [ ] Declaro que el frontmatter incluye `TRIGGERS:` en `description` entre comillas dobles.
+- [ ] Declaro que la skill incluye `## Triggers` (keywords, patrones, encadenamiento) y está registrada en `scripts/agent-prompts.json`.
+- [ ] Declaro que evité los anti-patrones de esta skill (emojis, encoding corrupto, secciones redundantes), citando cuál aplicaba al caso concreto.
+- [ ] Declaro que el cierre usa auto-cita (ver regla anterior), no auto-evaluación.
+
+## Triggers
+- Keywords: crear skill, nueva skill, normalizar skill, reescribir skill, estructura skill, skill nueva
+- Patrones de usuario: "Crea una nueva skill siguiendo la estructura del hub", "Normaliza esta skill para que cumpla el estandar", "Reescribe el SKILL.md manteniendo la intencion", "Anade la seccion ## Triggers a esta skill"
+- Encadenamiento: antes de `crear-agentes` si lo que se crea es un agente (no una skill de dominio); despues de `documentar-con-criterio` cuando la skill modifica documentacion de proyecto; hermanas `auditar-proyecto-tecnico` (verifica que la skill nueva no rompe validacion) y `mantener-cerebro-operativo` (chequeo integral del hub tras cambios estructurales)
 
 # Ejemplos de activación
 "Crea una nueva skill siguiendo la estructura estándar del repositorio y alinea el contenido con las reglas globales."

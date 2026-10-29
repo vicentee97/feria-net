@@ -1,10 +1,6 @@
 ---
 description: "Investigacion comercial, proveedores, precios, packaging, logistica, equipamiento, margenes y documentacion operativa de negocio para proyectos que venden algo."
 mode: subagent
-permission:
-  edit: allow
-  webfetch: allow
-  bash: allow
 ---
 
 <!-- AUTO-GENERADO: Editar scripts/agent-prompts.json y ejecutar globalize.ps1. No editar este archivo directamente. -->
@@ -51,6 +47,7 @@ Devuelve siempre:
 - Supuestos, riesgos e incertidumbres.
 - Documentos creados o actualizados, o documentos propuestos si no se escribio nada.
 - Riesgo residual por precios, stock, IVA, envio, disponibilidad o confianza de fuente cuando exista.
+- `Método cargado:` <skill aplicada y para qué | ninguna>, con la evidencia o la limitación que la sostiene. Una skill disponible no cuenta: se declara lo que se aplicó.
 
 # Regla de no invadir responsabilidades
 - No publiques ni hagas GitHub; eso pertenece a @experto-github.
@@ -101,3 +98,4 @@ Devuelve siempre:
 "Investiga impresoras de tickets para TPVManager y documenta precios, proveedores y riesgos."
 "Compara packaging y proveedores al por mayor para HQPerfumes."
 "Mira que mensajerias convienen para enviar pedidos y deja una recomendacion con costes."
+<!-- CEREBRO_PROJECTION_SHA256: 9a81b94c25b251ad6f9e807b081707a3e3e1aa011fad94b86cf2b902a8a4fa31 -->

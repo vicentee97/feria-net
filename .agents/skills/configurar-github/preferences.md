@@ -17,18 +17,18 @@ Si una preferencia referencia archivos o convenciones que no existen en el proye
 - Advertencia: Usar prefijos versionados en commits de sync puede generar ruido en el historial y confundir la trazabilidad de releases reales.
 - Ultima confirmacion: 2026-05-05
 
-## publish-only-on-explicit-order
+## safe-autopilot-on-close
 - Alcance: global.
-- Regla: Una validacion funcional (`ok`, `funciona`, `perfecto`, `esta bien`) deja el trabajo en estado `listo para publicar`, pero no autoriza `commit`, `push`, PR ni release. Publica solo cuando el usuario lo pida explicitamente con una orden como `sube los cambios`, `haz push`, `haz commit y push`, `crea PR` o `saca release`.
+- Regla: Una validacion funcional (`ok`, `funciona`, `perfecto`, `esta bien`) autoriza a la IA a guardar y proteger trabajo rutinario con `scripts/git_guardian.py`: commit atomico y publicacion en el destino permitido por [ramas.md](ramas.md), incluido main rutinario cuando proceda, o rama/PR si el gate lo pide. La IA no pregunta mecanica Git rutinaria. Release formal, tags, force push, borrado remoto, merge grande/sensible a `main`, secretos, auth/permisos/datos/RLS y operaciones irreversibles siguen exigiendo autorizacion humana simple.
 - Cuando aplica: Al cerrar cualquier ciclo de desarrollo normal.
-- Ejemplo: Tras `ok, funciona bien`, responder `listo para publicar`; tras `sube los cambios`, preparar decision de publicacion.
-- Advertencia: Exigir orden explicita para publicar puede retrasar entregas si el usuario asume que la validacion implicita autoriza el push.
-- Ultima confirmacion: 2026-04-29
+- Ejemplo: Tras `ok, funciona bien`, si el gate esta verde, ejecutar la ruta permitida y responder `incorporado a main en GitHub` o `subido a una rama; falta incorporar`, segun evidencia; si toca secretos o release, responder `bloqueado por riesgo real` y pedir autorizacion simple.
+- Advertencia: La automatizacion solo cubre decisiones tecnicas reversibles; bloquea cambios o residuos propios sin resolver, CI rojo obligatorio, secretos, lease incompatible o superficie sensible del lote. Los archivos ajenos separables quedan excluidos y se avisan, sin impedir guardar o cerrar el lote propio.
+- Ultima confirmacion: 2026-07-05
 
 ## commit-context-source
 - Alcance: global.
 - Regla: Antes de redactar un commit, revisa `git status` y `git diff`; si existe un TEAM activo en `.teams/`, usalo tambien. Si no existe `.teams/`, no bloquees y reporta `sin TEAM verificable` solo cuando afecte a trazabilidad.
-- Cuando aplica: Justo antes de crear commits tras orden explicita de publicacion.
+- Cuando aplica: Justo antes de crear commits, tanto en autopiloto seguro como en publicacion pedida explicitamente.
 - Ejemplo: Leer `.teams/TEAM_007_...` cuando exista, revisar el diff y redactar el resumen final con fuentes reales.
 - Advertencia: Depender de archivos de equipo puede ser contraproducente si el archivo esta obsoleto o fue editado por otra sesion de IA sin contexto completo.
 - Ultima confirmacion: 2026-03-14
@@ -51,11 +51,11 @@ Si una preferencia referencia archivos o convenciones que no existen en el proye
 
 ## git-output-minimum
 - Alcance: global.
-- Regla: Tras cualquier `push`, PR o `release`, devuelve siempre tipo, rama, commit, version, tag, PR si aplica y enlace.
+- Regla: Tras cualquier push, PR o release, conservar tipo, rama, commit, version, tag y PR en el informe interno. En la respuesta visible aplicar el contrato de estados de SKILL.md: destino verificado, incorporacion o pendiente, comprobaciones y enlace util; sin volcar hashes/version/tag por rutina.
 - Cuando aplica: En la respuesta final despues de operaciones Git/GitHub.
-- Ejemplo: `Tipo: sync push`, `Rama: feature/ui`, `Commit: abc123`, `Version: sin cambios`, `Tag: sin tag`, `PR: no aplica`, `Enlace: https://...`.
+- Ejemplo: "Incorporado a main en GitHub; copia local actualizada y pruebas aprobadas", con enlace al resultado. Una rama subida se comunica como "aun no incorporada a main".
 - Advertencia: Incluir metadatos exhaustivos en cada respuesta puede alargar la salida y distraer del foco tecnico.
-- Ultima confirmacion: 2026-04-29
+- Ultima confirmacion: 2026-10-01
 
 ## branch-naming
 - Alcance: global.
@@ -75,11 +75,11 @@ Si una preferencia referencia archivos o convenciones que no existen en el proye
 
 ## solo-work-pr-policy
 - Alcance: global.
-- Regla: En proyectos de una sola persona, no uses PR por defecto para cambios pequenos o sync push ordinarios. Propone o usa rama + PR cuando el cambio sea grande, transversal, de release, de arquitectura, sensible, o cuando convenga dejar una revision formal antes de mezclar en `main`.
-- Cuando aplica: Al decidir entre push directo, rama de trabajo o PR.
-- Ejemplo: Un fix documental puede ir directo; un refactor transversal o una release formal puede ir por rama + PR.
+- Regla: En proyectos de una sola persona, el control se gradua por tamano sin mover el desarrollo local por defecto. Primero se implementa en el workspace activo para que el usuario pueda probar; al cierre Git Guardian decide: TRIVIAL -> `main` directo; MEDIO -> guardar/proteger con rama efimera solo si aporta control o main lo exige, con gate `listo para mergear`; GRANDE/sensible/release -> PR obligatorio. No PR/worktree por burocracia en triviales ni medios pequenos; PR donde el riesgo o la proteccion de rama lo exige.
+- Cuando aplica: Al decidir entre seguir en workspace local, push directo, rama de proteccion o PR.
+- Ejemplo: Un fix de menu en solitario se cambia en el workspace local y se prueba en navegador; si el diff final es medio y main no esta protegida, puede guardarse/mergearse sin PR; un refactor transversal o una release formal va por rama + PR.
 - Advertencia: Omitir PRs en cambios grandes de una sola persona pierde la oportunidad de revision futura y dejar rastro de decisiones.
-- Ultima confirmacion: 2026-04-29
+- Ultima confirmacion: 2026-07-08
 
 ## git-metadata-language
 - Alcance: global.
@@ -91,10 +91,10 @@ Si una preferencia referencia archivos o convenciones que no existen en el proye
 
 ## push-all-pending-changes-on-request
 - Alcance: global.
-- Regla: Si el usuario pide subir o publicar los cambios, incluye por defecto todo el estado pendiente del repositorio, aunque parte de esos cambios provenga de otros chats de IA, salvo que el usuario indique explicitamente limitar el alcance.
-- Cuando aplica: Al ejecutar `git add`, `commit` y `push` tras una orden explicita de subir/publicar cambios.
-- Ejemplo: Si hay cambios propios de la sesion y otros pendientes ya presentes en `git status`, se suben todos juntos si el alcance se declara.
-- Advertencia: Subir cambios pendientes de otros chats puede introducir cambios no revisados o no deseados por el usuario.
+- Regla: Si el usuario pide subir o publicar los cambios, incluye por defecto el estado pendiente reconocible y seguro que pertenezca al lote propio. El Git Guardian debe clasificar el diff y no mezclar cambios de propietario indeterminado, secretos, residuos ni superficies sensibles en commits rutinarios. Bloquea los riesgos propios o incluidos en el lote; excluye y avisa de los ajenos separables sin detener la publicacion propia.
+- Cuando aplica: Al ejecutar `git add`, `commit` y `push` en autopiloto seguro o tras una orden explicita de subir/publicar cambios.
+- Ejemplo: Si hay cambios propios y otros `team-log` o `hub-sync` del mismo lote, se guardan juntos si la historia es coherente; un cambio ajeno separable queda fuera y se avisa. Si el propietario de un cambio incluido en el lote es indeterminado, el guardado se bloquea hasta aclararlo.
+- Advertencia: Subir cambios pendientes de otros chats sin ownership claro puede introducir cambios no revisados o no deseados por el usuario; por eso el gate clasifica antes de commitear.
 - Ultima confirmacion: 2026-03-21
 
 ## commit-body-default
@@ -144,3 +144,44 @@ Si una preferencia referencia archivos o convenciones que no existen en el proye
 - Ejemplo: Commit `[v1.05.00] feat: formaliza el versionado`, `HUB_VERSION=1.05.00` y tag `v1.05.00`.
 - Advertencia: Triplicar la version en commit, archivo y tag aumenta la superficie de error si alguno se actualiza manualmente.
 - Ultima confirmacion: 2026-03-21
+
+## merge-policy
+- Alcance: global.
+- Regla: Elige la estrategia de integracion de una rama a `main` por regla segun tamano, no por preferencia puntual: MEDIO -> `git merge --ff-only` (o `--no-ff` si el historial no permite ff); GRANDE/SENSIBLE -> squash merge; RELEASE formal -> `merge --no-ff` + tag. Detalle y motivo en [merge-gate.md](merge-gate.md).
+- Cuando aplica: Al fusionar una rama a la rama de integracion tras el gate `listo para mergear`.
+- Ejemplo: Un MEDIO con 2 commits -> `git merge --ff-only`; un GRANDE por PR -> squash merge en 1 commit semantico.
+- Advertencia: Squash para MEDIO pierde granularidad util (1-3 commits); forzar ff cuando hay divergencia puede pedir rebase y sumar friccion.
+- Ultima confirmacion: 2026-07-03
+
+## branch-ttl
+- Alcance: global.
+- Regla: Toda rama efimera tiene TTL de 72h desde el ultimo commit; sin renovacion (commit o heartbeat) pasa a `caducada`. A los 7 dias sin renovacion pasa a `candidata a borrado`. La rama no se borra sola: el borrado es operacion destructiva que exige orden humana. Cualquier commit nuevo reinicia el TTL.
+- Cuando aplica: Al auditar el arbol de ramas y al decidir si una rama sigue activa.
+- Ejemplo: Una rama `feature/x` con ultimo commit hace 80 horas -> `caducada`; hace 9 dias -> `candidata a borrado`.
+- Advertencia: El TTL mide commits, no trabajo en progreso sin commitear; una rama con WIP largo se marca caducada aunque este activa.
+- Ultima confirmacion: 2026-07-03
+
+## branch-limit
+- Alcance: global.
+- Regla: Mas de 5 ramas efimeras activas (local + remoto) genera aviso de mantenimiento. Nunca bloquea por si solo abrir una rama necesaria, guardar, publicar o cerrar; tampoco exige borrar trabajo ajeno. Preferir reutilizar una rama propia del mismo tema cuando sea compatible.
+- Cuando aplica: Al abrir una rama nueva y al auditar el arbol.
+- Ejemplo: Con 5 ramas activas, se abre la 6ª si protege el lote; se informa del mantenimiento sin tocar las otras.
+- Advertencia: El contador no demuestra conflictos ni perdida de trabajo; su umbral es redefinible por SSOT local.
+- Ultima confirmacion: 2026-09-27
+
+## pr-required-for
+- Alcance: global.
+- Regla: Aplicar la tabla canonica de rutas de [ramas.md](ramas.md): PR obligatorio para GRANDE/SENSIBLE/RELEASE, superficie exclusive o rama objetivo protegida. TRIVIAL y MEDIO en solitario con main no protegida pueden ir directamente a main si el gate lo permite; MEDIO usa rama efimera solo cuando aporta control o hay validacion pendiente. La deteccion de proteccion y su fallback viven en [merge-gate.md](merge-gate.md), sin interpretarlos como permiso para omitir un PR obligatorio.
+- Cuando aplica: Al elegir entre push directo, rama de trabajo o PR tras clasificar el tamano.
+- Ejemplo: Un MEDIO con main protegida -> PR; el mismo cambio sin proteccion y con gate verde -> main directo o rama justificada, sin PR obligatorio.
+- Advertencia: Asumir protegida por defecto sin `gh` puede abrir PR innecesarios en el hub; asumir no protegida en consumidores puede dejar rechazos de push.
+- Ultima confirmacion: 2026-10-01
+
+## suggest-on-close
+- Alcance: global.
+- Regla: Al cerrar una tarea material (criterios CREAR team de Rule 2 de `docs/AI_GLOBAL_RULES.md`: >1 archivo; docs/protocolos/arquitectura/roadmap/reglas; trabajo >1 respuesta; investigacion con decisiones; auth/datos/Supabase/Git/seguridad; contexto que deba sobrevivir al siguiente LLM) con cierre `inmediato` o `por-lote`, o cuando el humano lo pide explicitamente, @experto-github entra en modo `autopiloto-de-cierre`: reconstruye estado con Git Guardian y el supervisor v2, marca `ready` tras validacion y puede ejecutar `integrate-local --local-only` si el cambio es TRIVIAL/MEDIO, limpio, no sensible y sin validacion humana pendiente. Con gate verde puede ejecutar tambien el `sync push` rutinario; la salida separa terminación local/protegida de estado remoto publicado o pendiente. Release formal, tags, force push, borrado remoto, merge grande/sensible a `main`, secretos, auth/permisos/datos/RLS y operaciones irreversibles siguen exigiendo autorizacion humana simple.
+- Default: `true` (autopiloto seguro por defecto). Justificado por el objetivo del humano "jefe no experto en git que no quiere decidir mecanica Git".
+- Cuando aplica: Al cierre de tarea material `inmediato`/`por-lote` de @orquestador, o ante demanda explicita del humano ("¿que hay pendiente?", "¿que hay que subir?", "dejalo listo").
+- Ejemplo: Tras cerrar una feature valida probada en local, el experto ejecuta `preflight` y `save`; si todo esta limpio, responde con destino y estado comprobados (por ejemplo, "incorporado a main en GitHub" o "guardado en tu equipo; pendiente subir"); si es grande/sensible, crea PR draft o deja "subido a una rama; pendiente incorporar" y pide autorizacion humana simple para integrar.
+- Advertencia: Desactivar esta preferencia con `suggest-on-close: false` en la SSOT local solo apaga el cierre automatico rutinario; no habilita operaciones destructivas ni releases sin autorizacion. Precedencia: SSOT local > preferencia global.
+- Ultima confirmacion: 2026-07-08

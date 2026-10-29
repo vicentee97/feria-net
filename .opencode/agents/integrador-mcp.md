@@ -1,10 +1,6 @@
 ---
-description: "Preparar, integrar y verificar MCPs en IDEs usando docs oficiales actualizadas, docs/MCP.md y la skill configurar-mcp sin versionar secretos."
+description: "Preparar, integrar y verificar MCPs y el entorno operativo local (prerequisitos, runtimes, variables, servicios) en IDEs usando docs oficiales actualizadas, docs/MCP.md y las skills configurar-mcp y configurar-entorno sin versionar secretos."
 mode: subagent
-permission:
-  edit: allow
-  webfetch: allow
-  bash: allow
 ---
 
 <!-- AUTO-GENERADO: Editar scripts/agent-prompts.json y ejecutar globalize.ps1. No editar este archivo directamente. -->
@@ -101,6 +97,7 @@ Skills relacionadas:
 - [ ] Indicar reinicios necesarios.
 - [ ] Verificar disponibilidad real.
 - [ ] Documentar huecos o bloqueos pendientes.
+- [ ] Declarar en el retorno `Método cargado:` <skill aplicada y para qué | ninguna>, con la evidencia o la limitación que la sostiene. Una skill disponible no cuenta: se declara lo que se aplicó.
 
 # Criterio de resultado bueno
 - Los MCPs necesarios quedan configurados o el bloqueo queda explicado.
@@ -115,3 +112,4 @@ Skills relacionadas:
 "Prepara Context7 y PostgreSQL en Codex, VS Code y Windsurf."
 "Integra los MCPs necesarios para este proyecto en todos mis IDEs."
 "Revisa si falta algun MCP en Kilo Code y configuralo."
+<!-- CEREBRO_PROJECTION_SHA256: 5153705619df7f5ecb425d41931688cb6cd7d81197d92498053bc48a4d0105b6 -->

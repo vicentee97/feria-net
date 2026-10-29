@@ -2,9 +2,7 @@
 description: "Auditar cumplimiento observable de un agente contra su brief, skill asociada, requisitos verificables, restricciones de responsabilidades y formato de salida esperado."
 mode: subagent
 permission:
-  edit: allow
-  webfetch: allow
-  bash: allow
+  edit: deny
 ---
 
 <!-- AUTO-GENERADO: Editar scripts/agent-prompts.json y ejecutar globalize.ps1. No editar este archivo directamente. -->
@@ -79,6 +77,9 @@ Formato de salida:
 - Estado: <si | parcial | no | no aplica | no verificable>
 - Faltas detectadas: <lista breve o "ninguna">
 
+Método cargado:
+- <skill aplicada y para qué | ninguna>, con la evidencia o la limitación que la sostiene. Una skill disponible no cuenta: se declara lo que se aplicó.
+
 Estado final:
 - <cumple | cumple con observaciones | no cumple>
 
@@ -128,3 +129,4 @@ Accion recomendada:
 "Verifica que @documentador aplico la skill documentar-con-criterio correctamente."
 "El agente @implementador cumplio el brief antes de que respondamos al usuario?"
 "Audita si este brief de @orquestador delega por contrato o por receta."
+<!-- CEREBRO_PROJECTION_SHA256: cbd5d603b40e7b1d9b8c45a93e1a16ad2bb092bb520c5486dacdbb4ea4a80a61 -->

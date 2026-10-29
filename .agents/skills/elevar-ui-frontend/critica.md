@@ -1,102 +1,143 @@
-# Método de crítica de interfaces
+# Método de crítica y refinamiento de interfaces
 
-Esta referencia recoge el método repetible que `elevar-ui-frontend` exige cuando la tarea principal es revisar o criticar una interfaz. El `SKILL.md` principal señala cuándo aplicarlo.
+Esta referencia define cómo revisar una interfaz y cómo iterar sobre ella sin convertir un gusto puntual, una solución local o una diferencia de código en una conclusión visual. El `SKILL.md` principal señala cuándo aplicarla.
 
-## Método de crítica de interfaces
+## Principio de partida
 
-Cuando la tarea principal sea revisar una interfaz, la IA no debe limitarse a listar gustos o comentarios sueltos. Debe seguir un método repetible y dejar claro qué está evaluando.
+Una crítica útil evalúa la **lectura y el uso** de una pantalla, no solo los elementos que contiene. Antes de proponer un cambio, distinguir entre:
 
-### Orden obligatorio de revisión
+- una evidencia observable en un render, una interacción o un estado real;
+- una hipótesis de causa;
+- una preferencia estética que sigue abierta.
 
-1. **Función de la pantalla**
-   - Qué intenta hacer esta pantalla: vigilar, actuar, revisar, cerrar, configurar o vender.
-   - Si eso no se entiende rápido, la crítica debe empezar por ahí.
+Comentarios como «esto parece igual», «no parece una sección», «hay demasiado aire» o «no sé dónde mirar» son evidencia válida de una percepción que hay que investigar. No se invalidan citando clases, tokens, intención de diseño o diferencias que solo existen en el código.
 
-2. **Jerarquía macro**
-   - Qué bloque manda.
-   - Qué bloque acompaña.
-   - Qué bloque sobra, compite o roba foco.
+Cuando el trabajo tenga una dirección visual, referencia o anti-referencia explícita, la primera lectura de la pantalla debe contrastarse también con ese contrato. No basta con que la implementación funcione.
 
-3. **Composición interna**
-   - Si los bloques destacados están bien resueltos por dentro.
-   - Si las métricas hermanas se leen como familia.
-   - Si el detalle operativo tiene una estructura estable.
+## Micro-loop de refinamiento proporcional
 
-4. **Materialidad y separación**
-   - Si las superficies pertenecen al mismo sistema.
-   - Si los bordes, divisores, tonos y radios refinan o endurecen la vista.
-   - Si resumen y detalle tienen un corte visual suficiente.
+Usar este ciclo cuando se diseñe, se pula o se responda a feedback visual persistente:
 
-5. **Densidad y ritmo**
-   - Si hay demasiado aire muerto, demasiada compresión o una cadencia plana.
-   - Si la pantalla parece apilada, dispersa o mecánica.
+1. **Situar la pantalla.** Identificar su función, persona usuaria, momento de uso, contenido o acción dominante, y el viewport/estado que se va a evaluar.
+2. **Nombrar los roles.** Separar contexto, sección, control, ayuda, estado, contenido operativo y acción antes de decidir cómo deben distinguirse.
+3. **Formular un claim perceptivo.** Expresar la relación que debería poder observarse, por ejemplo qué guía primero la lectura, qué se entiende como grupo o qué queda claramente secundario.
+4. **Capturar una línea base.** Renderizar el estado relevante y anotar qué evidencia sostiene o contradice el claim.
+5. **Probar una hipótesis.** Cambiar una relación de composición, agrupación, densidad, jerarquía o materialidad que pueda explicar el síntoma. No acumular ajustes inconexos.
+6. **Comparar la percepción.** Volver a renderizar el mismo perfil y decidir si la relación cambió de forma observable. Si no cambió, reclasificar la causa antes de seguir.
+7. **Cerrar o escalar.** Detenerse cuando el claim tenga evidencia suficiente; si el síntoma persiste, la evidencia es insuficiente o la decisión afecta navegación, shell o sistema, escalar con el contexto recogido.
 
-6. **Estados y datos pobres**
-   - Si la pantalla sigue funcionando cuando casi todo está a cero.
-   - Si depende demasiado de datos futuros para verse viva.
+El ciclo es interno y proporcional: una pantalla acotada no necesita una ceremonia extensa, pero sí una hipótesis y una comprobación visual cuando existe acceso a render. Un loop multiagente formal solo corresponde a objetivos amplios o transversales. Si no hay navegador, datos, autenticación o visión disponibles, dejar esa limitación explícita y no presentar la percepción como validada.
 
-7. **Robustez**
-   - Qué pasaría en portátil, monitor ancho, zoom alto, textos más largos o datos más sucios.
+## Orden de revisión
 
-### Formato de salida recomendado al criticar
+Aplicar las capas en este orden para no pulir una causa equivocada:
 
-- Empezar por 3-7 fallos principales, ordenados por impacto.
-- Después explicar el patrón general que está fallando.
-- Cerrar con una dirección de mejora, no con una lista infinita de microcambios.
-- Si la crítica revela una laguna reusable en esta skill, actualizarla o dejarlo explícitamente marcado.
+1. **Función y orientación.** Qué intenta conseguir la persona, qué cambia si actúa y si el contexto ya está resuelto por navegación o flujo previo.
+2. **Jerarquía macro.** Qué manda, qué acompaña y qué no merece competir por atención en la primera lectura.
+3. **Agrupación y composición interna.** Qué elementos forman una unidad, qué separación expresa una relación distinta y si los bloques hermanos se leen como familia.
+4. **Contenido y controles.** Si etiquetas, ayuda, datos, acciones y estados explican su prioridad y consecuencia sin depender de decoración.
+5. **Materialidad y sistema.** Si las superficies, contraste, tipografía, divisores y señales de estado refuerzan los roles dentro del lenguaje existente.
+6. **Densidad y ritmo.** Si la cadencia ayuda a escanear en vez de producir vacío sin propósito, compresión, repetición o una secuencia plana.
+7. **Estados, datos y robustez.** Si la lectura se conserva con contenido escaso, extenso, inválido, cargando, abierto, con error, con foco, en rangos de viewport y con teclado.
 
-## Rúbrica rápida de evaluación
+No saltar a detalles de materialidad cuando no está claro qué debe leerse como primario, secundario o agrupado.
 
-Cuando convenga, la IA puede puntuar la pantalla de `0` a `5` en estas categorías para evitar críticas vagas:
+## Lentes de refinamiento progresivo
 
-- **Función y claridad operativa**
-  - `0`: no se entiende para qué sirve.
-  - `5`: la intención de uso es inmediata.
+Estas lentes sirven para explorar una pantalla poco a poco. No son una lista mecánica ni obligan a que toda interfaz use la misma solución; seleccionar las que afectan al objetivo y al estado evaluado.
 
-- **Jerarquía macro**
-  - `0`: todo compite.
-  - `5`: la prioridad visual es indiscutible.
+### Lectura y propósito
 
-- **Composición interna**
-  - `0`: bloques mal resueltos por dentro.
-  - `5`: cada grupo se lee como sistema.
+- orientación dentro del flujo y repetición útil o innecesaria de contexto;
+- primera lectura, tarea dominante y siguiente paso comprensible;
+- orden entre información, decisión y confirmación;
+- carga cognitiva de copy, etiquetas y explicaciones persistentes;
+- coincidencia entre el modelo mental de la persona y la estructura visible.
 
-- **Materialidad y consistencia**
-  - `0`: mezcla torpe de superficies, bordes o tonos.
-  - `5`: lenguaje visual coherente y refinado.
+### Agrupación y ritmo
 
-- **Detalle operativo**
-  - `0`: listas, métricas o importes dispersos.
-  - `5`: detalle compacto, legible y estable.
+- proximidad, continuidad y separación entre elementos relacionados o independientes;
+- jerarquía perceptible entre pantalla, sección, subgrupo y control;
+- alineación de contenido, acciones, iconografía y ayudas;
+- ritmo entre bloques, dentro de cada grupo y durante transiciones;
+- densidad que permita escanear sin crear vacío ornamental ni hacinamiento.
 
-- **Ritmo y densidad**
-  - `0`: caos, vacío inútil o planitud total.
-  - `5`: cadencia clara y energía visual controlada.
+### Contenido y controles
 
-- **Robustez responsive**
-  - `0`: solo funciona en un screenshot.
-  - `5`: mantiene jerarquía y equilibrio en rangos reales.
+- legibilidad y rol de títulos, etiquetas, valores, ayuda y estados;
+- prioridad y consecuencia de acciones primarias, secundarias y destructivas;
+- affordance de controles, selección, expansión, edición y confirmación;
+- claridad de la relación entre una opción, su explicación y su efecto;
+- visibilidad de cambios pendientes, validaciones, errores y resultado de guardar.
 
-No hace falta mostrar siempre la puntuación al usuario, pero la IA debe poder usarla internamente para evitar juicios inconsistentes.
+### Materialidad y sistema
 
-## Ejemplo anti-sesgo
+- consistencia de superficies, profundidad, contraste y bordes con el design system real;
+- señales visuales que diferencian roles sin añadir ruido;
+- repetición intencional de patrones y excepción justificada cuando cambia la función;
+- proporción entre identidad visual, contenido y utilidad operativa;
+- ausencia de acumulación de tarjetas, adornos, iconos o señales que no aportan relación.
 
-### Caso: tarjeta de dashboard con rendimiento semanal
+### Uso y resiliencia
 
-**Mal:**
+- estabilidad de la lectura en viewport, zoom y contenido variable;
+- estados cerrados, expandidos, seleccionados, deshabilitados, cargando y con error cuando apliquen;
+- foco, teclado, lectura asistida y mensajes de feedback;
+- continuidad entre navegación, contexto de página y contenido principal;
+- ausencia de cortes, solapes, scroll inesperado o pérdida de prioridad al cambiar de estado.
 
-- una `Card` principal;
-- dentro, otra caja informativa lateral;
-- dentro, un empty state resuelto como otra subcard;
-- dentro de esa subcard, otra caja para el CTA;
-- y dos o tres frases explicando cosas obvias.
+## Formato de salida al criticar o refinar
 
-**Bien:**
+Documentar solo lo material, usando esta secuencia:
 
-- una sola `Card` principal;
-- KPI principal arriba y chips secundarios compactos;
-- empty state resuelto con layout directo dentro de la propia card o con el propio skeleton estático si comunica mejor;
-- una sola frase útil;
-- un único CTA visible;
-- sin paneles internos extra si no separan una función distinta;
-- y composición que siga siendo clara en portátil y escritorio ancho, no solo en la captura inicial.
+- **Claim:** qué relación visual o de uso se esperaba.
+- **Evidencia:** qué se observa en el estado y viewport revisados.
+- **Hipótesis:** qué capa parece causar la diferencia entre ambos.
+- **Dirección:** qué relación debe cambiar, sin convertirla en receta universal.
+- **Resultado:** qué muestra el siguiente render; si no se pudo comprobar, qué queda pendiente.
+
+Una respuesta puede comenzar por los tres a siete hallazgos de mayor impacto, explicar el patrón común y cerrar con una dirección de mejora. Evitar listas infinitas de microcambios o una puntuación sin evidencia.
+
+## Rúbrica de apoyo
+
+Cuando ayude a evitar crítica vaga, evaluar de forma cualitativa estas dimensiones. La puntuación es interna y opcional; nunca sustituye la evidencia.
+
+- **Función y claridad operativa:** la intención de uso y su siguiente paso son comprensibles.
+- **Jerarquía percibida entre roles:** la persona distingue qué manda, qué agrupa y qué acompaña sin necesitar una explicación externa.
+- **Composición y agrupación:** los elementos relacionados forman sistemas legibles y los independientes no se confunden.
+- **Materialidad y consistencia:** el lenguaje visual existente sostiene la función en vez de competir con ella.
+- **Ritmo y densidad:** hay una cadencia útil para escanear, leer y actuar.
+- **Estados y feedback:** cambios, consecuencias y errores siguen siendo claros durante la interacción.
+- **Robustez inclusiva:** la prioridad se mantiene en rangos reales, con contenido variable y mediante teclado.
+
+## Antisesgos frecuentes
+
+### Diferencia implementada, diferencia no percibida
+
+**Mal:** concluir que dos niveles están diferenciados porque usan clases, tokens, iconos o estilos distintos.
+
+**Bien:** describir qué relación falla en la captura, probar una hipótesis de jerarquía y comprobar si alguien puede distinguir los roles en la primera lectura.
+
+### Solución local convertida en patrón universal
+
+**Mal:** trasladar una cabecera, una tarjeta, un divisor o una intensidad de contraste que funcionó en un caso a todas las pantallas.
+
+**Bien:** conservar el principio transferible —por ejemplo, hacer visible una agrupación o reducir competencia— y elegir la expresión que encaje con la función, el sistema y el contexto de cada pantalla.
+
+### Bucle cosmético
+
+**Mal:** encadenar ajustes mínimos cuando el usuario sigue percibiendo el mismo problema.
+
+**Bien:** volver al claim, cambiar de capa diagnóstica y pedir o producir nueva evidencia antes de seguir refinando.
+
+### Lectura decorativa
+
+**Mal:** añadir contexto, copy, superficies o iconos porque parecen elevar la pantalla, aunque la navegación y el flujo ya resuelvan la orientación.
+
+**Bien:** conservar solo lo que modifica comprensión, decisión, riesgo, estado o acción; la ausencia de un elemento también puede ser una decisión de diseño.
+
+### Captura única
+
+**Mal:** calificar una interfaz a partir de un único estado ideal.
+
+**Bien:** revisar los estados y perfiles que cambian la lectura o la interacción, en proporción al riesgo de la pantalla.

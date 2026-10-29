@@ -29,13 +29,19 @@ Regla práctica: una excepción visual aceptable debe ser local, justificada, le
 
 Si un componente oficial del design system se ve distinto a la demo o al patrón esperado, la skill no debe asumir primero que el fallo vive en el componente.
 
-Antes de añadir clases, paddings, radios o overrides locales, debe revisar si la diferencia nace de tokens globales del proyecto como `radius`, sombras, tipografía, colores base, densidad de campo o variables de tema.
-
-Si el proyecto busca acercarse visualmente al sistema oficial, la prioridad es restaurar o alinear esos tokens globales antes que encadenar microajustes sobre cada componente.
+Antes de añadir clases, paddings, radios o overrides locales, debe revisar si la diferencia nace de tokens globales del proyecto como `radius`, sombras, tipografía, colores base, densidad de campo o variables de tema, y restaurar o alinear esos tokens antes que encadenar microajustes sobre cada componente.
 
 Regla práctica: si varios componentes oficiales parecen "más redondeados", "más blandos" o "más pesados" que la documentación, probablemente el problema está en el tema global y no en cada `Select`, `Input` o `Button`.
 
 Si el proyecto documenta una fuente MCP preferente para esa librería o design system y ese MCP no está disponible localmente, la skill debe indicarlo y derivar a `configurar-mcp` antes de improvisar patrones como si la fuente oficial ya estuviera operativa.
+
+### Regla 0.0.2: verificar clases y tokens contra el tema compilado antes de componer
+
+MUST comprobar que cada clase de utilidad, token o escala existe en el tema compilado del proyecto antes de usarla. Las clases inexistentes no producen error: simplemente no se aplican, y el fallo solo se ve al renderizar con el tema real.
+
+Fuentes de verificación, en orden: configuración del tema (p. ej. `tailwind.config`, variables CSS o tokens de la librería), CSS compilado del build y captura real. La documentación o la memoria de la librería no sustituyen esa comprobación.
+
+Regla práctica: si una escala o token no aparece en la configuración del tema ni en el CSS compilado, no existe; usar los roles semánticos reales del proyecto (fondo, superficie, texto rebajado, borde) en vez de la escala asumida. Anti-ejemplo real: un rediseño entero compuesto con una escala `default-50/100/...` que no existía en el tema compilado; hubo que rehacerlo sobre tokens reales.
 
 ## Delegación a skills y MCPs específicos de librería
 

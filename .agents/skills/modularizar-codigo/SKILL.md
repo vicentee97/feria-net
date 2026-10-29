@@ -1,14 +1,14 @@
 ---
 name: modularizar-codigo
-description: "Divide archivos monoliticos en modulos mas pequenos, enfocados y mantenibles, preservando comportamiento y contratos existentes. TRIGGERS: modularizar, split file, monolito, componente grande, refactor big component, dividir archivo."
+description: "Usar cuando un archivo se haya vuelto monolitico, dificil de leer o mantener, y necesites dividirlo en modulos mas pequenos preservando comportamiento y contratos existentes. TRIGGERS: modularizar, split file, monolito, componente grande, refactor big component, dividir archivo."
 ---
 
 # Modularizar Codigo
 
-## Objetivo
+# Objetivo
 Dividir archivos monoliticos en modulos mas pequenos, enfocados y mantenibles, preservando comportamiento, contratos existentes y sin cambiar funcionalidad.
 
-## Alcance y limites
+# Alcance y limites
 - Incluye identificar responsabilidades y extraer componentes, hooks y datos.
 - Incluye verificar que no cambia comportamiento ni contratos publicos.
 - No redefine arquitectura; si la division afecta fronteras entre modulos, escala a @arquitecto.
@@ -19,6 +19,7 @@ Dividir archivos monoliticos en modulos mas pequenos, enfocados y mantenibles, p
 - Archivo monolitico a dividir.
 - Componentes hermanos y patrones del proyecto.
 - SSOT y convenciones de estructura.
+- Criterio de division de componentes del proyecto (ADR, seccion de docs o convencion escrita), si existe: cargarlo ANTES de definir umbrales de extraccion y naming, porque los umbrales genericos de esta skill (p. ej. ideal < 300 lineas) pueden chocar con los del proyecto (p. ej. otro umbral).
 - Build y typecheck como verificacion continua.
 
 ## Comportamiento esperado
@@ -86,18 +87,25 @@ Dividir archivos monoliticos en modulos mas pequenos, enfocados y mantenibles, p
 - [ ] Validar typecheck o build proporcional tras bloques relevantes.
 - [ ] Eliminar codigo muerto y dejar el archivo original como compositor claro.
 
-## Criterio de resultado bueno
-- El comportamiento publico no cambia y los contratos existentes se preservan.
-- Cada modulo extraido tiene responsabilidad clara, tamano razonable e interfaz minima.
-- La estructura respeta convenciones reales del proyecto y evita barrels o capas innecesarias.
-- El cierre incluye checks ejecutados y cualquier riesgo residual.
+## Reglas duras (MUST/NEVER)
+- MUST verificar el comportamiento tras cada extraccion: con tests del modulo o, si no existen, con lista explicita de interacciones probadas a mano (o riesgo residual declarado). Typecheck solo no prueba comportamiento.
+- MUST respetar la regla de salida: archivo original < 300 lineas o excepcion justificada en el informe; NEVER extraer nada nuevo si el modulo queda < 30 lineas.
+- MUST usar la convencion detectada en archivos hermanos; `src/data`, `src/lib`, `src/hooks` y `src/components` son solo defaults cuando existe `src/`.
+- MUST hacer 1 extraccion = 1 commit con build/typecheck verdes; NEVER mezclar refactor con feature en el mismo lote.
+
+## Criterio de resultado bueno (gate de cierre, auto-cita)
+- [ ] **Declaro** la verificacion de comportamiento realizada (tests, interacciones probadas o riesgo residual declarado) y que refactor y feature no se mezclaron en el mismo lote.
+- [ ] **Declaro** el tamano final del archivo original contra la regla de salida (< 300 lineas o excepcion justificada).
+- [ ] **Declaro** que cada extraccion fue 1 commit con checks verdes.
+- [ ] **Declaro** que la estructura respeta la convencion real del proyecto (no defaults a ciegas) y evita barrels o capas innecesarias.
+- [ ] **Declaro** el riesgo residual si algo quedo sin poder verificar.
 
 ## Triggers
 - Keywords: modularizar, split file, monolito, componente grande, refactor big component, dividir archivo, archivo muy grande
 - Patrones de usuario: "este archivo es muy grande", "divide este componente", "modulariza page.tsx", "tengo un componente de 900 lineas"
 - Encadenamiento: despues de `actuar-como-senior` como implementacion del analisis
 
-## Ejemplos de activacion
+# Ejemplos de activacion
 - "Modulariza page.tsx que tiene 900 lineas."
 - "Este componente hace demasiadas cosas, dividelo."
 - "Extrae los datos y hooks de este archivo monolitico."
