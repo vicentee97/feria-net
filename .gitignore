@@ -78,6 +78,10 @@ supabase/.env
 # .ai-work/ es el namespace del hub para tareas en curso.
 # *.restore_* son staging de recuperacion del orquestador.
 .ai-work/
+.agents/
+.codex/agents/
+.opencode/agents/
+.cerebro-operativo/
 *.tmp
 *.bak
 *.restore_*
