@@ -16,7 +16,8 @@ Escritorio **Windows-first** con **Tauri 2.x** (Rust) + **React 19** + **Vite** 
 docs/           # SSOT, product-map, TODO, arquitectura, modelo, reglas
 .teams/         # registro operativo de trabajos (TEAM-NNN)
 .questions/     # preguntas abiertas y decisiones pendientes
-.scripts/       # scripts de desarrollo Windows (punto de entrada: dev.bat)
+dev.bat         # lanzador interactivo de desarrollo en Windows
+scripts/        # utilidades de desarrollo no interactivas (cuando existan)
 .gitignore      # base general + stack
 ```
 
@@ -50,7 +51,7 @@ Orden sugerido antes de tocar codigo:
 ### Arranque local
 
 Una vez instaladas las dependencias (`npm install`), el punto de entrada
-oficial en Windows es `.scripts\dev.bat` (menu interactivo). Desde ahi:
+oficial en Windows es `dev.bat` en la raiz (menu interactivo). Desde ahi:
 
 - Opcion **2**: arranca la app completa (Vite + ventana Tauri). Equivale a
   `npm run tauri dev` y abre la ventana nativa cuando termina la primera
