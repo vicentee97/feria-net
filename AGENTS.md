@@ -52,8 +52,8 @@ Reconstruye el informe interno; filtra al visible SOLO lo que cambia una decisio
 ## Hub Sync
 Trabajo normal/alto exige comparar version, revision y manifiesto antes de editar:
 - Synced hub version: 1.09.00
-- Synced hub revision hint: 8c14443
-- Synced hub manifest hash: e1969fbb39fbf7ef55651fd45d789430ad1b4e1550650189d6b52e1bf5e6a01e
+- Synced hub revision hint: 33c0be9
+- Synced hub manifest hash: 272eae50ee855ba6ef8eeeb5a331ed0e3e5f5d1688f34d46ab3a8ce13fc62706
 Lee `.cerebro-operativo/hub-path.txt`; si falta o difiere, advierte y sincroniza con `globalize.ps1` antes de concluir. Las skills enlazadas viven en el hub; las proyecciones de agentes requieren regeneracion.
 
 # Rule 24 — Higiene y propiedad de artefactos
