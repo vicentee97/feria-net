@@ -52,8 +52,8 @@ Reconstruye el informe interno; filtra al visible SOLO lo que cambia una decisio
 ## Hub Sync
 Trabajo normal/alto exige comparar version, revision y manifiesto antes de editar:
 - Synced hub version: 1.09.00
-- Synced hub revision hint: 0df20c4
-- Synced hub manifest hash: 4c803cdfe4a75f9fc363b63844c414414b71820dac28765723b2c5a5931241ed
+- Synced hub revision hint: 8c14443
+- Synced hub manifest hash: e1969fbb39fbf7ef55651fd45d789430ad1b4e1550650189d6b52e1bf5e6a01e
 Lee `.cerebro-operativo/hub-path.txt`; si falta o difiere, advierte y sincroniza con `globalize.ps1` antes de concluir. Las skills enlazadas viven en el hub; las proyecciones de agentes requieren regeneracion.
 
 # Rule 24 — Higiene y propiedad de artefactos
@@ -106,20 +106,20 @@ Las skills viven en el hub y son la fuente operativa de detalle. Activa la skill
 
 ## Agents
 ### Available agents
-- integrador-mcp | desc: Preparar, integrar y verificar MCPs y el entorno operativo local (prerequisitos, runtimes, variables, servicios) en IDEs usando docs oficiales actualizadas, docs/MCP.md y las skills configurar-mcp y configurar-entorno sin versionar secretos. | file: .opencode/agents/integrador-mcp.md
-- ingeniero-backend | desc: Backend, SQL, Supabase, PostgreSQL, RLS, migraciones, seeds, APIs, webhooks, auth server-side y tipos. | file: .opencode/agents/ingeniero-backend.md
-- implementador | desc: UI, frontend, menu, layout, visual, modal, componente y codigo funcional. Implementa cambios siguiendo el brief y respetando el design system real del proyecto. | file: .opencode/agents/implementador.md
-- orquestador | desc: Orquestar, delegar y consolidar trabajo multiagente con briefs ejecutivos por contrato, sin invadir la ejecucion especialista. | file: .opencode/agents/orquestador.md
-- revisor | desc: Review, bugs, regresiones, riesgos materiales, code review, UI review y auditoria antes de validar o publicar. | file: .opencode/agents/revisor.md
-- qa-validador | desc: Validar, build, tests, lint, typecheck, responsive, accesibilidad basica y checks proporcionales para cambios tecnicos o visuales. | file: .opencode/agents/qa-validador.md
-- qa-funcional | desc: Cuestionador funcional post-implementador: lluvia de preguntas para cazar huecos en la historia de usuario que un humano no programador preguntaria. NO valida gates tecnicos (eso es @qa-validador) ni audita riesgos materiales (eso es @revisor). | file: .opencode/agents/qa-funcional.md
-- auditor-cumplimiento | desc: Auditar cumplimiento observable de un agente contra su brief, skill asociada, requisitos verificables, restricciones de responsabilidades y formato de salida esperado. | file: .opencode/agents/auditor-cumplimiento.md
-- arquitecto | desc: Arquitectura, navegacion, layout transversal, design system, composicion estructural y decisiones tecnicas dificiles de revertir. | file: .opencode/agents/arquitecto.md
 - analista-comercial | desc: Investigacion comercial, proveedores, precios, packaging, logistica, equipamiento, margenes y documentacion operativa de negocio para proyectos que venden algo. | file: .opencode/agents/analista-comercial.md
+- arquitecto | desc: Arquitectura, navegacion, layout transversal, design system, composicion estructural y decisiones tecnicas dificiles de revertir. | file: .opencode/agents/arquitecto.md
+- auditor-cumplimiento | desc: Auditar cumplimiento observable de un agente contra su brief, skill asociada, requisitos verificables, restricciones de responsabilidades y formato de salida esperado. | file: .opencode/agents/auditor-cumplimiento.md
 - crear-agentes | desc: Crear agentes, normalizar agentes, formato Codex oficial, prompts espejo entre Codex y OpenCode y source of truth unica. | file: .opencode/agents/crear-agentes.md
-- experto-github | desc: Git, GitHub, commit, push, release, versionado y publicacion conservadora tras validacion. | file: .opencode/agents/experto-github.md
-- especialista-seguridad | desc: Auditoria de seguridad, auth, permisos, secretos, datos sensibles, RLS, APIs, webhooks, pagos, uploads y hardening proporcional. | file: .opencode/agents/especialista-seguridad.md
 - documentador | desc: Documentar, actualizar docs, README, SSOT y solo lo necesario tras cambios funcionales, visuales o estructurales. | file: .opencode/agents/documentador.md
+- especialista-seguridad | desc: Auditoria de seguridad, auth, permisos, secretos, datos sensibles, RLS, APIs, webhooks, pagos, uploads y hardening proporcional. | file: .opencode/agents/especialista-seguridad.md
+- experto-github | desc: Git, GitHub, commit, push, release, versionado y publicacion conservadora tras validacion. | file: .opencode/agents/experto-github.md
+- implementador | desc: UI, frontend, menu, layout, visual, modal, componente y codigo funcional. Implementa cambios siguiendo el brief y respetando el design system real del proyecto. | file: .opencode/agents/implementador.md
+- ingeniero-backend | desc: Backend, SQL, Supabase, PostgreSQL, RLS, migraciones, seeds, APIs, webhooks, auth server-side y tipos. | file: .opencode/agents/ingeniero-backend.md
+- integrador-mcp | desc: Preparar, integrar y verificar MCPs y el entorno operativo local (prerequisitos, runtimes, variables, servicios) en IDEs usando docs oficiales actualizadas, docs/MCP.md y las skills configurar-mcp y configurar-entorno sin versionar secretos. | file: .opencode/agents/integrador-mcp.md
+- orquestador | desc: Orquestar, delegar y consolidar trabajo multiagente con briefs ejecutivos por contrato, sin invadir la ejecucion especialista. | file: .opencode/agents/orquestador.md
+- qa-funcional | desc: Cuestionador funcional post-implementador: lluvia de preguntas para cazar huecos en la historia de usuario que un humano no programador preguntaria. NO valida gates tecnicos (eso es @qa-validador) ni audita riesgos materiales (eso es @revisor). | file: .opencode/agents/qa-funcional.md
+- qa-validador | desc: Validar, build, tests, lint, typecheck, responsive, accesibilidad basica y checks proporcionales para cambios tecnicos o visuales. | file: .opencode/agents/qa-validador.md
+- revisor | desc: Review, bugs, regresiones, riesgos materiales, code review, UI review y auditoria antes de validar o publicar. | file: .opencode/agents/revisor.md
 
 ### Routing y uso
 Usa `@orquestador` como entrada de trabajo complejo: clasifica, delega con objetivo/superficie/restricciones/aceptacion/checks y consolida; no edita por reflejo ni inventa aprobacion/publicacion. El guardado rutinario propio con Git Guardian verde lo puede ejecutar `@orquestador`; PR, conflicto, publicacion sensible/formal o gate rojo van a `@experto-github`. Otras rutas obligatorias: `@auditor-cumplimiento` (auditar agentes), `@crear-agentes` (agentes), `@integrador-mcp` (MCP), `@especialista-seguridad` (auth, permisos, secretos, datos, APIs, webhooks), `@qa-validador` (gates tecnicos), `@revisor` (riesgos materiales). UI puntual va a `@implementador`; navegacion/design system/limites estructurales a `@arquitecto`. Backend, SQL, RLS, migraciones, APIs, auth servidor y tipos a `@ingeniero-backend`; UI que solo consume contratos existentes a `@implementador`.

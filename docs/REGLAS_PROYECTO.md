@@ -68,7 +68,7 @@ Reglas operativas acordadas al cerrar la epica 1:
 - **Primera compilacion**: `cargo build` desde `src-tauri/` tarda 3-5 min
   (descarga ~500 crates y compila webview2-com, ring, rusqlite-sys con
   SQLite embebido). Las siguientes son segundos.
-- **Comandos canonicos** (definidos en `.scripts/dev.bat`):
+- **Comandos canonicos** (definidos en `dev.bat`):
   - `npm run tauri dev` — Vite + ventana Tauri en modo desarrollo.
   - `npm run build` — TypeScript + Vite, genera `dist/`.
   - `npm run tauri build` — produce instalador MSI/EXE en

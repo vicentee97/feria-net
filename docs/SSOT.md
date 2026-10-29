@@ -39,6 +39,15 @@ Naming obligatorio en documentación, código, UI y mensajes:
 | **TPV** | Terminal de venta. La pantalla donde el operador cobra. |
 | **Feriante** | Usuario del sistema. |
 
+## Organización local de archivos
+
+- Código de producto: `src/`; shell Tauri: `src-tauri/`.
+- Documentación: `docs/`.
+- Planes: `planes/AAAA-MM-DD-<slug>.md`; no existe una segunda carpeta `plans/`.
+- Utilidades: `scripts/`; lanzador humano: `dev.bat` en la raíz.
+- Memoria operativa de IAs: `.teams/`, `.questions/` y `.cerebro-operativo/`.
+- Configuración de herramientas y artefactos generados viven en carpetas ocultas; `.scripts/` y las integraciones de clientes retirados no son destinos activos.
+
 ## Modelo de dominio (nivel mental, sin esquema)
 
 ```
